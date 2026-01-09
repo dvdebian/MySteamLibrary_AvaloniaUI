@@ -1,0 +1,11 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="using:MySteamLibrary.Views"
+        x:Class="MySteamLibrary.Views.MainWindow"
+        Title="My Steam Library"
+        Width="1000" Height="700"
+        Background="#171a21">
+    
+    <views:MainView />
+    
+</Window>

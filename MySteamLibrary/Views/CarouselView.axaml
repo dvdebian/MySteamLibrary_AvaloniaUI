@@ -1,0 +1,56 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:MySteamLibrary.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MySteamLibrary.Views.CarouselView"
+             x:DataType="vm:CarouselViewModel">
+
+    <Grid RowDefinitions="*, Auto">
+        <ScrollViewer Grid.Row="0" 
+                      HorizontalScrollBarVisibility="Hidden" 
+                      VerticalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding Games}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" 
+                                    VerticalAlignment="Center" 
+                                    HorizontalAlignment="Center" 
+                                    Spacing="-40" 
+                                    Margin="50,0"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Width="200" 
+                                Height="300" 
+                                Background="#2a2e33" 
+                                CornerRadius="8"
+                                BoxShadow="0 10 20 0 Black">
+                            <Panel>
+                                <TextBlock Text="{Binding Title}" 
+                                           VerticalAlignment="Center" 
+                                           HorizontalAlignment="Center"
+                                           TextAlignment="Center"
+                                           Padding="10"/>
+                            </Panel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="1" Margin="0,0,0,40" HorizontalAlignment="Center">
+            <TextBlock Text="{Binding ModeName}" 
+                       Foreground="Gray" 
+                       HorizontalAlignment="Center" 
+                       FontSize="10"/>
+            <TextBlock Text="GAME TITLE" 
+                       FontSize="22" 
+                       FontWeight="Bold" 
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

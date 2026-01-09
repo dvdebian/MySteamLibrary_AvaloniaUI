@@ -1,0 +1,47 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:MySteamLibrary.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MySteamLibrary.Views.CoverView"
+             x:DataType="vm:CoverViewModel">
+
+    <Grid RowDefinitions="*, Auto">
+        
+        <Border Grid.Row="0" Margin="20" CornerRadius="8" Background="#1a1d21">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10">
+                 <TextBlock Text="{Binding ModeName}" Foreground="Gray" HorizontalAlignment="Center"/>
+                 <TextBlock Text="SELECT A GAME TO VIEW DETAILS" Opacity="0.5" />
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" 
+                      HorizontalScrollBarVisibility="Auto" 
+                      VerticalScrollBarVisibility="Disabled"
+                      Margin="0,0,0,20">
+            <ItemsControl ItemsSource="{Binding Games}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="15" Margin="20,0"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Width="180" Height="270" Background="#2a2e33" CornerRadius="4">
+                            <Panel>
+                                <TextBlock Text="{Binding Title}" 
+                                           VerticalAlignment="Bottom" 
+                                           HorizontalAlignment="Center" 
+                                           Margin="10" 
+                                           TextWrapping="Wrap"
+                                           TextAlignment="Center"/>
+                            </Panel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

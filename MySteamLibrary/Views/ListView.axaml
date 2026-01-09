@@ -1,0 +1,43 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:MySteamLibrary.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MySteamLibrary.Views.ListView"
+             x:DataType="vm:ListViewModel">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20" Spacing="10">
+            <TextBlock Text="{Binding ModeName}" 
+                       Foreground="Gray" 
+                       FontSize="12" />
+            
+            <ItemsControl ItemsSource="{Binding Games}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="#1e2329" 
+                                Margin="0,5" 
+                                Padding="10" 
+                                CornerRadius="4">
+                            <Grid ColumnDefinitions="Auto, *">
+                                <Panel Grid.Column="0" Width="60" Height="90" Background="#2a2e33"/>
+                                
+                                <StackPanel Grid.Column="1" Margin="15,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="16"/>
+                                    <TextBlock Text="{Binding PlayTime}" Foreground="SkyBlue" FontSize="12"/>
+                                    <TextBlock Text="{Binding Description}" 
+                                               Opacity="0.7" 
+                                               TextWrapping="Wrap" 
+                                               MaxLines="2" 
+                                               FontSize="11"
+                                               Margin="0,5,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

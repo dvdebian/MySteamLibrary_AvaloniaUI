@@ -1,0 +1,44 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:MySteamLibrary.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MySteamLibrary.Views.GridView"
+             x:DataType="vm:GridViewModel">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20" Spacing="10">
+            <TextBlock Text="{Binding ModeName}" Foreground="Gray" FontSize="12" />
+
+            <ItemsControl ItemsSource="{Binding Games}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Background="Transparent" Padding="5" Margin="5">
+                            <StackPanel Width="150">
+                                <Border CornerRadius="4" ClipToBounds="True" Height="225" Background="#2a2e33">
+                                    <Panel>
+                                        <TextBlock Text="POSTER" VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.5"/>
+                                    </Panel>
+                                </Border>
+                                <TextBlock Text="{Binding Title}" 
+                                           HorizontalAlignment="Center" 
+                                           Margin="0,5,0,0" 
+                                           FontSize="14" 
+                                           FontWeight="SemiBold"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,50 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:MySteamLibrary.ViewModels"
+             xmlns:views="using:MySteamLibrary.Views"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MySteamLibrary.Views.MainView"
+             x:DataType="vm:MainViewModel">
+
+    <UserControl.DataTemplates>
+        <DataTemplate DataType="{x:Type vm:ListViewModel}">
+            <views:ListView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:GridViewModel}">
+            <views:GridView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CoverViewModel}">
+            <views:CoverView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CarouselViewModel}">
+            <views:CarouselView />
+        </DataTemplate>
+    </UserControl.DataTemplates>
+
+    <Grid RowDefinitions="Auto, *">
+        
+        <StackPanel Grid.Row="0" Spacing="10" Margin="20">
+            <TextBlock Text="MY STEAM LIBRARY" FontSize="24" FontWeight="Bold" />
+            
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <Button Content="LIST" Command="{Binding SelectModeCommand}" CommandParameter="List" />
+                <Button Content="GRID" Command="{Binding SelectModeCommand}" CommandParameter="Grid" />
+                <Button Content="COVER" Command="{Binding SelectModeCommand}" CommandParameter="Cover" />
+                <Button Content="CAROUSEL" Command="{Binding SelectModeCommand}" CommandParameter="Carousel" />
+                
+                <Separator Margin="10,0" Width="1" Background="Gray"/>
+                <Button Content="SETTINGS" Command="{Binding ToggleSettingsCommand}" />
+            </StackPanel>
+            
+            <TextBox Watermark="SEARCH" Text="{Binding SearchText}" />
+        </StackPanel>
+
+        <ContentControl Grid.Row="1" Content="{Binding ActiveView}" />
+        <Panel Grid.Row="0" Grid.RowSpan="2" IsVisible="{Binding IsSettingsOpen}">
+        <views:SettingsView 
+                            DataContext="{Binding Settings}" />
+        </Panel>
+    </Grid>
+</UserControl>
