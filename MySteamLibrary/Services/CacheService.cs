@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using MySteamLibrary.Models;
 
@@ -18,6 +19,9 @@ namespace MySteamLibrary.Services
         private readonly string _metadataFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cache", "library_cache.json");
         private readonly HttpClient _httpClient;
 
+        // Semaphore to ensure only one thread writes to the JSON file at a time
+        private static readonly SemaphoreSlim _fileLock = new SemaphoreSlim(1, 1);
+
         public CacheService()
         {
             _httpClient = new HttpClient();
@@ -30,10 +34,12 @@ namespace MySteamLibrary.Services
         }
 
         /// <summary>
-        /// Saves the list of GameModels to a local JSON file.
+        /// Saves the list of GameModels to a local JSON file using a thread-safe lock.
         /// </summary>
         public async Task SaveLibraryCacheAsync(List<GameModel> games)
         {
+            // Wait for our turn to access the file
+            await _fileLock.WaitAsync();
             try
             {
                 var json = JsonSerializer.Serialize(games, new JsonSerializerOptions { WriteIndented = true });
@@ -41,7 +47,12 @@ namespace MySteamLibrary.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error saving cache: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error saving cache: {ex.Message}");
+            }
+            finally
+            {
+                // Always release the lock so other tasks can use the file
+                _fileLock.Release();
             }
         }
 
@@ -52,6 +63,8 @@ namespace MySteamLibrary.Services
         {
             if (!File.Exists(_metadataFile)) return new List<GameModel>();
 
+            // We also use the lock here to ensure we don't read while the file is being written
+            await _fileLock.WaitAsync();
             try
             {
                 var json = await File.ReadAllTextAsync(_metadataFile);
@@ -60,6 +73,10 @@ namespace MySteamLibrary.Services
             catch
             {
                 return new List<GameModel>();
+            }
+            finally
+            {
+                _fileLock.Release();
             }
         }
 

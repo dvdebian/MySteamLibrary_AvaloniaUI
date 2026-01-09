@@ -30,54 +30,55 @@ namespace MySteamLibrary.Services
         }
 
         /// <summary>
-        /// Orchestrates the data loading: Checks cache first, otherwise fetches from Steam.
+        /// Stage 1: Returns only the basic game list (AppId, Title, Playtime).
+        /// This is very fast and allows the UI to populate "Skeletons" immediately.
         /// </summary>
-        public async Task<List<GameModel>> GetFullLibraryAsync()
+        public async Task<List<GameModel>> GetLibrarySkeletonAsync()
         {
-            // 1. Try to load existing data from the local JSON cache
-            var cachedGames = await _cacheService.LoadLibraryCacheAsync();
-
-            if (cachedGames != null && cachedGames.Any())
-            {
-                return cachedGames;
-            }
-
-            // 2. If no cache exists, fetch the list from Steam Web API
-            var games = await FetchOwnedGamesFromApiAsync();
-
-            // 3. For each game found, ensure the image is downloaded locally
-            foreach (var game in games)
-            {
-                string remoteUrl = $"https://cdn.akamai.steamstatic.com/steam/apps/{game.AppId}/library_600x900_2x.jpg";
-                game.ImagePath = await _cacheService.GetOrDownloadImageAsync(game.AppId, remoteUrl);
-            }
-
-            // 4. Save the processed list (with local paths) to the cache file
-            await _cacheService.SaveLibraryCacheAsync(games);
-
-            return games;
+            // Fetch the list from Steam Web API (No image or description loops here)
+            return await FetchOwnedGamesFromApiAsync();
         }
 
         /// <summary>
-        /// Loops through the library and fetches descriptions for games that are missing them.
-        /// Includes a delay to respect Steam's Store API rate limits.
+        /// Stage 3: Downloads the image for a specific game and updates its path.
+        /// </summary>
+        public async Task LoadGameImageAsync(GameModel game)
+        {
+            string remoteUrl = $"https://cdn.akamai.steamstatic.com/steam/apps/{game.AppId}/library_600x900_2x.jpg";
+
+            // GetOrDownloadImageAsync handles the local check internally
+            game.ImagePath = await _cacheService.GetOrDownloadImageAsync(game.AppId, remoteUrl);
+        }
+
+        /// <summary>
+        /// Stage 4: Loops through the library and fetches descriptions.
+        /// Updates the cache incrementally to ensure progress is saved.
         /// </summary>
         public async Task RefreshDescriptionsAsync(IEnumerable<GameModel> games)
         {
             var gameList = games.ToList();
+            int count = 0;
+
             foreach (var game in gameList)
             {
                 // Only fetch if we don't have a description yet
-                if (string.IsNullOrEmpty(game.Description))
+                if (string.IsNullOrEmpty(game.Description) || game.Description == "No description available.")
                 {
                     game.Description = await GetGameDescriptionAsync(game.AppId);
+                    count++;
+
+                    // Save cache every 5 games to persist progress without hitting the disk too hard
+                    if (count % 5 == 0)
+                    {
+                        await _cacheService.SaveLibraryCacheAsync(gameList);
+                    }
 
                     // Delaying for 1.5 seconds to avoid IP block from Steam Store API
                     await Task.Delay(1500);
                 }
             }
 
-            // Update the local cache file with the new descriptions
+            // Final save to ensure all progress is captured
             await _cacheService.SaveLibraryCacheAsync(gameList);
         }
 

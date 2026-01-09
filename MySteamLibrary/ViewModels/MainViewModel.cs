@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MySteamLibrary.Models;
@@ -12,9 +13,11 @@ namespace MySteamLibrary.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
 {
+    // Services for API data and local persistence
     private readonly SteamApiService _steamService = new();
+    private readonly CacheService _cacheService = new();
 
-    // 1. Fields to store the pre-created view models
+    // Fields to store the pre-created view models for navigation
     private readonly ListViewModel _listView;
     private readonly GridViewModel _gridView;
     private readonly CoverViewModel _coverView;
@@ -40,44 +43,54 @@ public partial class MainViewModel : ViewModelBase
 
     public SettingsViewModel Settings { get; } = new();
 
+    // The master collection that all sub-views bind to
     private readonly ObservableCollection<GameModel> _allGames = new();
 
     public MainViewModel()
     {
-        // 2. Initialize each view model once, passing the master game collection
+        // Initialize sub-view models with the shared game collection
         _listView = new ListViewModel { Games = _allGames };
         _gridView = new GridViewModel { Games = _allGames };
         _coverView = new CoverViewModel { Games = _allGames };
         _carouselView = new CarouselViewModel { Games = _allGames };
 
-        // Set initial view reference
+        // Default view on startup
         _activeView = _listView;
 
+        // Hook up settings close action
         Settings.RequestClose = () => IsSettingsOpen = false;
 
-        _ = LoadSteamLibraryAsync();
+        // Startup: Load only from cache. No automatic network fetch.
+        _ = InitializeLibraryAsync();
     }
 
-    private async Task LoadSteamLibraryAsync()
+    /// <summary>
+    /// Initial load that only looks at the local cache.
+    /// </summary>
+    private async Task InitializeLibraryAsync()
     {
         try
         {
-            var result = await _steamService.GetFullLibraryAsync();
+            var cachedGames = await _cacheService.LoadLibraryCacheAsync();
 
-            _allGames.Clear();
-            foreach (var game in result)
+            if (cachedGames != null && cachedGames.Any())
             {
-                _allGames.Add(game);
+                _allGames.Clear();
+                foreach (var game in cachedGames)
+                {
+                    _allGames.Add(game);
+                }
             }
-
-            SelectMode("List");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to load library: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Failed to load cache: {ex.Message}");
         }
     }
 
+    /// <summary>
+    /// Stage-based Refresh: 1. Skeleton UI, 2. Background Images, 3. Background Descriptions.
+    /// </summary>
     [RelayCommand]
     public async Task RefreshLibrary()
     {
@@ -86,10 +99,25 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             IsRefreshing = true;
-            await _steamService.RefreshDescriptionsAsync(_allGames);
 
-            // Refresh logic: Since instances are cached, no need to re-create
-            // UI bindings will update via ObservableProperty in GameModel
+            // STAGE 1: Fast Skeleton Load (Titles and Playtime only)
+            var freshGames = await _steamService.GetLibrarySkeletonAsync();
+
+            if (freshGames != null && freshGames.Any())
+            {
+                _allGames.Clear();
+                foreach (var game in freshGames)
+                {
+                    _allGames.Add(game);
+                }
+
+                // Initial cache save with skeletons
+                await _cacheService.SaveLibraryCacheAsync(_allGames.ToList());
+
+                // STAGE 2 & 3: Launch background updates without 'awaiting' them here
+                // This allows IsRefreshing to finish quickly so the UI isn't blocked.
+                _ = Task.Run(() => BackgroundUpdateDataAsync());
+            }
         }
         catch (Exception ex)
         {
@@ -102,8 +130,25 @@ public partial class MainViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Swaps the ActiveView to a pre-existing instance instead of creating a 'new' one.
+    /// Background worker to fill in images and descriptions piece-by-piece.
     /// </summary>
+    private async Task BackgroundUpdateDataAsync()
+    {
+        var gameList = _allGames.ToList();
+
+        // 1. STAGE 2: Fast Parallel Image Download
+        // We run these in parallel because Steam's CDN is fast and not rate-limited like the Store API.
+        var imageTasks = gameList.Select(game => _steamService.LoadGameImageAsync(game));
+        await Task.WhenAll(imageTasks);
+
+        // Save cache once images are linked
+        await _cacheService.SaveLibraryCacheAsync(_allGames.ToList());
+
+        // 2. STAGE 3: Sequential Description Fetch (Rate-limited)
+        // This method handles its own internal 1.5s delay and periodic cache saving.
+        await _steamService.RefreshDescriptionsAsync(_allGames);
+    }
+
     [RelayCommand]
     public void SelectMode(string mode)
     {
