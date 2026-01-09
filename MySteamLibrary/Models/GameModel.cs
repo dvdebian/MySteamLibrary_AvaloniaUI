@@ -17,8 +17,9 @@ namespace MySteamLibrary.Models
         private string _title = string.Empty;
 
         // The full game description fetched from the Store API
+        // Updated: Set to "Loading..." by default for immediate UI feedback
         [ObservableProperty]
-        private string _description = string.Empty;
+        private string _description = "Loading description...";
 
         // Raw playtime in minutes as returned by the Steam API
         // NotifyPropertyChangedFor ensures the PlayTime string updates when this value changes

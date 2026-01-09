@@ -30,13 +30,38 @@ namespace MySteamLibrary.Services
         }
 
         /// <summary>
-        /// Stage 1: Returns only the basic game list (AppId, Title, Playtime).
-        /// This is very fast and allows the UI to populate "Skeletons" immediately.
+        /// Stage 1: Returns the game list from cache (if exists) or API.
+        /// Updated: Ensures all descriptions are initialized with "Loading description..."
+        /// to support the UI placeholder style.
         /// </summary>
         public async Task<List<GameModel>> GetLibrarySkeletonAsync()
         {
-            // Fetch the list from Steam Web API (No image or description loops here)
-            return await FetchOwnedGamesFromApiAsync();
+            // 1. Try to load from local cache first
+            var cachedGames = await _cacheService.LoadLibraryCacheAsync();
+
+            if (cachedGames != null && cachedGames.Any())
+            {
+                // Ensure cached games with missing descriptions show the "Loading..." text
+                foreach (var game in cachedGames)
+                {
+                    if (string.IsNullOrWhiteSpace(game.Description))
+                    {
+                        game.Description = "Loading description...";
+                    }
+                }
+                return cachedGames;
+            }
+
+            // 2. Fetch the list from Steam Web API if no cache exists
+            var apiGames = await FetchOwnedGamesFromApiAsync();
+
+            // Initialize new API games with the loading state
+            foreach (var game in apiGames)
+            {
+                game.Description = "Loading description...";
+            }
+
+            return apiGames;
         }
 
         /// <summary>
@@ -52,7 +77,7 @@ namespace MySteamLibrary.Services
 
         /// <summary>
         /// Stage 4: Loops through the library and fetches descriptions.
-        /// Updates the cache incrementally to ensure progress is saved.
+        /// Updated: Fetches if current text is the "Loading..." placeholder.
         /// </summary>
         public async Task RefreshDescriptionsAsync(IEnumerable<GameModel> games)
         {
@@ -61,8 +86,10 @@ namespace MySteamLibrary.Services
 
             foreach (var game in gameList)
             {
-                // Only fetch if we don't have a description yet
-                if (string.IsNullOrEmpty(game.Description) || game.Description == "No description available.")
+                // Only fetch if empty or currently showing the placeholder/error state
+                if (string.IsNullOrWhiteSpace(game.Description) ||
+                    game.Description == "Loading description..." ||
+                    game.Description == "No description available.")
                 {
                     game.Description = await GetGameDescriptionAsync(game.AppId);
                     count++;
@@ -70,7 +97,7 @@ namespace MySteamLibrary.Services
                     // Save cache every 5 games to persist progress without hitting the disk too hard
                     if (count % 5 == 0)
                     {
-                        await _cacheService.SaveLibraryCacheAsync(gameList);
+                        await _fileLockSave(gameList);
                     }
 
                     // Delaying for 1.5 seconds to avoid IP block from Steam Store API
@@ -81,6 +108,9 @@ namespace MySteamLibrary.Services
             // Final save to ensure all progress is captured
             await _cacheService.SaveLibraryCacheAsync(gameList);
         }
+
+        // Helper to handle periodic saves within the loop
+        private async Task _fileLockSave(List<GameModel> list) => await _cacheService.SaveLibraryCacheAsync(list);
 
         /// <summary>
         /// Fetches the 'short_description' from the Steam Storefront API.
@@ -102,7 +132,8 @@ namespace MySteamLibrary.Services
                     string htmlDescription = data.GetProperty("short_description").GetString() ?? string.Empty;
 
                     // Clean the HTML tags before returning the text
-                    return StripHtmlTags(htmlDescription);
+                    string cleaned = StripHtmlTags(htmlDescription);
+                    return string.IsNullOrWhiteSpace(cleaned) ? "No description available." : cleaned;
                 }
             }
             catch (Exception ex)

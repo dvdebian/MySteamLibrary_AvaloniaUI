@@ -39,6 +39,11 @@
         <Style Selector="ListBoxItem:pointerover Border.GameRow">
             <Setter Property="Background" Value="#3367c1f5"/>
         </Style>
+
+        <Style Selector="TextBlock.DescriptionText[Text=Loading description...]">
+            <Setter Property="FontStyle" Value="Italic"/>
+            <Setter Property="Opacity" Value="0.3"/>
+        </Style>
     </UserControl.Styles>
 
     <ListBox ItemsSource="{Binding Games}" Padding="0,20,0,0" ClipToBounds="False">
@@ -72,6 +77,7 @@
                                            FontWeight="SemiBold"/>
                                 
                                 <TextBlock Text="{Binding Description}" 
+                                           Classes="DescriptionText"
                                            Opacity="0.6" 
                                            TextWrapping="Wrap" 
                                            MaxLines="3" 
