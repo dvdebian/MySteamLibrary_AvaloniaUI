@@ -3,6 +3,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:MySteamLibrary.ViewModels"
+             xmlns:models="using:MySteamLibrary.Models"
+             xmlns:views="using:MySteamLibrary.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="MySteamLibrary.Views.CoverView"
              x:DataType="vm:CoverViewModel">
@@ -28,17 +30,29 @@
                 </ItemsControl.ItemsPanel>
 
                 <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Width="180" Height="270" Background="#2a2e33" CornerRadius="4">
-                            <Panel>
-                                <TextBlock Text="{Binding Title}" 
-                                           VerticalAlignment="Bottom" 
-                                           HorizontalAlignment="Center" 
-                                           Margin="10" 
-                                           TextWrapping="Wrap"
-                                           TextAlignment="Center"/>
-                            </Panel>
-                        </Border>
+                    <DataTemplate x:DataType="models:GameModel">
+                        <Button Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0"
+                                Command="{Binding $parent[views:MainView].((vm:MainViewModel)DataContext).OpenGameDetailsCommand}"
+                                CommandParameter="{Binding}">
+                            
+                            <Border Width="180" Height="270" Background="#2a2e33" CornerRadius="4" ClipToBounds="True">
+                                <Panel>
+                                    <Image Source="{Binding ImagePath}" Stretch="UniformToFill"/>
+                                    
+                                    <Border Background="#99000000" VerticalAlignment="Bottom">
+                                        <TextBlock Text="{Binding Title}" 
+                                                   VerticalAlignment="Center" 
+                                                   HorizontalAlignment="Center" 
+                                                   Margin="10" 
+                                                   TextWrapping="Wrap"
+                                                   TextAlignment="Center"
+                                                   FontSize="12"/>
+                                    </Border>
+                                </Panel>
+                            </Border>
+                        </Button>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

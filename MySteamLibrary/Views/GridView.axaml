@@ -3,6 +3,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:MySteamLibrary.ViewModels"
+             xmlns:models="using:MySteamLibrary.Models"
+             xmlns:views="using:MySteamLibrary.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="MySteamLibrary.Views.GridView"
              x:DataType="vm:GridViewModel">
@@ -19,12 +21,21 @@
                 </ItemsControl.ItemsPanel>
 
                 <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Button Background="Transparent" Padding="5" Margin="5">
+                    <DataTemplate x:DataType="models:GameModel">
+                        <Button Background="Transparent" 
+                                Padding="5" 
+                                Margin="5"
+                                Command="{Binding $parent[views:MainView].((vm:MainViewModel)DataContext).OpenGameDetailsCommand}"
+                                CommandParameter="{Binding}">
                             <StackPanel Width="150">
                                 <Border CornerRadius="4" ClipToBounds="True" Height="225" Background="#2a2e33">
                                     <Panel>
-                                        <TextBlock Text="POSTER" VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.5"/>
+                                        <Image Source="{Binding ImagePath}" Stretch="UniformToFill"/>
+                                        <TextBlock Text="POSTER" 
+                                                   IsVisible="{Binding ImagePath, Converter={x:Static ObjectConverters.IsNull}}"
+                                                   VerticalAlignment="Center" 
+                                                   HorizontalAlignment="Center" 
+                                                   Opacity="0.5"/>
                                     </Panel>
                                 </Border>
                                 <TextBlock Text="{Binding Title}" 
