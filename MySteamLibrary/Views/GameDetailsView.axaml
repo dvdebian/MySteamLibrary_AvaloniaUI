@@ -2,19 +2,110 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:MySteamLibrary.ViewModels"
              x:Class="MySteamLibrary.Views.GameDetailsView"
-             x:DataType="vm:GameDetailsViewModel"
-             Background="#1b2838">
-    <Grid ColumnDefinitions="300, *" Margin="40">
-        <Image Grid.Column="0" Source="{Binding SelectedGame.ImagePath}" 
-               Stretch="UniformToFill" VerticalAlignment="Top"/>
-        
-        <StackPanel Grid.Column="1" Margin="30,0,0,0" Spacing="20">
-            <TextBlock Text="{Binding SelectedGame.Title}" FontSize="36" FontWeight="Bold"/>
-            <TextBlock Text="TIME PLAYED: 12.5 hours" Foreground="Gray"/>
-            <TextBlock Text="{Binding SelectedGame.Description}" TextWrapping="Wrap" FontSize="16"/>
+             x:DataType="vm:GameDetailsViewModel">
+
+    <UserControl.Styles>
+    <Style Selector="Button.CloseBtn">
+        <Setter Property="Background" Value="#3d4450"/>
+        <Setter Property="Foreground" Value="#9fa3a9"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                <BrushTransition Property="Foreground" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.CloseBtn:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#4d5460"/> 
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+
+    <Style Selector="TextBlock.Label">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="#858d97"/>
+        <Setter Property="LetterSpacing" Value="1.5"/>
+    </Style>
+</UserControl.Styles>
+
+    <Panel Background="#CC000000">
+        <Button Command="{Binding CloseCommand}" 
+                Background="Transparent" 
+                BorderThickness="0" 
+                HorizontalAlignment="Stretch" 
+                VerticalAlignment="Stretch"/>
+
+        <Border Background="#1b2838"
+                Width="850"
+                Height="600"
+                CornerRadius="12"
+                BoxShadow="0 25 60 0 Black"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center">
             
-            <Button Content="BACK" HorizontalAlignment="Left" 
-                    Command="{Binding CloseCommand}"/>
-        </StackPanel>
-    </Grid>
+            <Grid ColumnDefinitions="400, *">
+                
+                <Border Grid.Column="0" 
+                        CornerRadius="12,0,0,12" 
+                        ClipToBounds="True"
+                        Background="#101010">
+                    <Image Source="{Binding SelectedGame.ImagePath}" 
+                           Stretch="UniformToFill"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"/>
+                </Border>
+
+                <Grid Grid.Column="1" RowDefinitions="Auto, Auto, *">
+                    
+                    <Button Grid.Row="0" 
+                            Classes="CloseBtn"
+                            Command="{Binding CloseCommand}" 
+                            Content="✕" 
+                            IsCancel="True"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            CornerRadius="4"
+                            Margin="20"
+                            Padding="12,8"
+                            FontSize="18"
+                            Cursor="Hand"/>
+
+                    <Border Grid.Row="1" Padding="35,0,35,10">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="{Binding SelectedGame.Title}" 
+                                       FontSize="42" 
+                                       FontWeight="Black" 
+                                       TextWrapping="Wrap"
+                                       Foreground="White"
+                                       LineHeight="46"/>
+                            
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="TIME PLAYED" Classes="Label"/>
+                                <TextBlock Text="12.5 hours" 
+                                           FontSize="13" 
+                                           Foreground="#67c1f5"
+                                           FontWeight="SemiBold"/>
+                            </StackPanel>
+                            
+                            <Separator Background="#3d4450" Height="1" Margin="0,20,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                        <Border Padding="35,15,35,40">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="DESCRIPTION" Classes="Label"/>
+                                <TextBlock Text="{Binding SelectedGame.Description}" 
+                                           FontSize="16" 
+                                           Foreground="#CCCCCC" 
+                                           LineHeight="24"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
+        </Border>
+    </Panel>
 </UserControl>
