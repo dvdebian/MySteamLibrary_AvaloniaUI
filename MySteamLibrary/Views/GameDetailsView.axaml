@@ -14,7 +14,7 @@
             <TextBlock Text="{Binding SelectedGame.Description}" TextWrapping="Wrap" FontSize="16"/>
             
             <Button Content="BACK" HorizontalAlignment="Left" 
-                    Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).CloseGameDetailsCommand}"/>
+                    Command="{Binding CloseCommand}"/>
         </StackPanel>
     </Grid>
 </UserControl>

@@ -48,6 +48,11 @@ public partial class MainViewModel : ViewModelBase
 
         // 2. Default to List View on startup.
         _activeView = new ListViewModel { Games = _allGames };
+
+        // Set up the "Callback". 
+        // We tell the SettingsViewModel: "When you call RequestClose, 
+        // I will run my ToggleSettings logic."
+        Settings.RequestClose = () => IsSettingsOpen = false;
     }
 
     /// <summary>
@@ -84,9 +89,14 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     public void OpenGameDetails(GameModel game)
     {
-        // Initialize the new ViewModel with the specific game data.
-        CurrentDetails = new GameDetailsViewModel(game);
-        // Show the overlay.
+        // 1. Create the instance
+        var detailsVm = new GameDetailsViewModel(game);
+
+        // 2. Hook up the Close logic (Best Practice)
+        detailsVm.RequestClose = () => IsGameDetailsOpen = false;
+
+        // 3. Assign it to the property and show the overlay
+        CurrentDetails = detailsVm;
         IsGameDetailsOpen = true;
     }
 

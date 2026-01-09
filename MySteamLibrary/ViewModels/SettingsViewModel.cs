@@ -1,4 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using System;
 
 namespace MySteamLibrary.ViewModels;
 
@@ -8,8 +10,11 @@ namespace MySteamLibrary.ViewModels;
 /// </summary>
 public partial class SettingsViewModel : ViewModelBase
 {
+    // A delegate (callback) that the MainViewModel will provide.
+    // This allows this ViewModel to request a close without knowing about MainViewModel.
+    public Action? RequestClose { get; set; }
+
     // The Steam Web API Key required to fetch user data.
-    // [ObservableProperty] allows the UI to update if the value changes in code.
     [ObservableProperty]
     private string _steamApiKey = string.Empty;
 
@@ -17,14 +22,23 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private string _steamId = string.Empty;
 
-    // Example of an additional setting seen in many library managers:
     // The local path where Steam is installed.
     [ObservableProperty]
     private string _steamPath = @"C:\Program Files (x86)\Steam";
 
     public SettingsViewModel()
     {
-        // For now, we initialize with empty strings or dummy values.
-        // Later, we can add logic here to load these from a JSON file.
+        // Initialization logic can go here.
+    }
+
+    /// <summary>
+    /// Triggered by the Close button in the UI.
+    /// It executes the RequestClose action if one has been assigned by the parent.
+    /// </summary>
+    [RelayCommand]
+    private void Close()
+    {
+        // The ?. operator ensures we only call Invoke if RequestClose is not null.
+        RequestClose?.Invoke();
     }
 }
