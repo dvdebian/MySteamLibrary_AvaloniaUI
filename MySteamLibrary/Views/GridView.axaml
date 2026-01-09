@@ -21,6 +21,9 @@
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="10"/>
             <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
+            <Setter Property="UseLayoutRounding" Value="False"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Transitions">
                 <Transitions>
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15"/>
@@ -32,16 +35,17 @@
             <Setter Property="Background" Value="#3d4450"/>
             <Setter Property="RenderTransform" Value="scale(1.05)"/>
             <Setter Property="ZIndex" Value="10"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
         </Style>
     </UserControl.Styles>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <controls:ItemsRepeater ItemsSource="{Binding Games}" Margin="20">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" ClipToBounds="False">
+        <controls:ItemsRepeater ItemsSource="{Binding Games}" Margin="20" ClipToBounds="False">
             <controls:ItemsRepeater.Layout>
                 <UniformGridLayout ItemsJustification="Center" 
                                    Orientation="Horizontal" 
                                    MinItemWidth="170" 
-                                   MinItemHeight="280" />
+                                   MinItemHeight="300" /> 
             </controls:ItemsRepeater.Layout>
 
             <controls:ItemsRepeater.ItemTemplate>
@@ -57,16 +61,8 @@
                                     ClipToBounds="True" 
                                     Height="225" 
                                     Background="#2a2e33">
-                                <Panel>
-                                    <Image Source="{Binding ImagePath, Converter={StaticResource VariableImageConverter}}" 
-                                           Stretch="UniformToFill"/>
-                                    
-                                    <TextBlock Text="POSTER" 
-                                               IsVisible="{Binding ImagePath, Converter={x:Static ObjectConverters.IsNull}}"
-                                               VerticalAlignment="Center" 
-                                               HorizontalAlignment="Center" 
-                                               Opacity="0.5"/>
-                                </Panel>
+                                <Image Source="{Binding ImagePath, Converter={StaticResource VariableImageConverter}}" 
+                                       Stretch="UniformToFill"/>
                             </Border>
 
                             <TextBlock Text="{Binding Title}" 
@@ -76,7 +72,10 @@
                                        FontWeight="SemiBold"
                                        Foreground="White"
                                        TextAlignment="Center"
-                                       TextWrapping="Wrap"/>
+                                       TextWrapping="Wrap"
+                                       MaxLines="2"
+                                       Height="40"
+                                       TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                     </Button>
                 </DataTemplate>

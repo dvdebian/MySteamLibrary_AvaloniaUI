@@ -41,7 +41,7 @@
         </Style>
     </UserControl.Styles>
 
-    <ListBox ItemsSource="{Binding Games}">
+    <ListBox ItemsSource="{Binding Games}" Padding="0,20,0,0" ClipToBounds="False">
         <ListBox.ItemTemplate>
             <DataTemplate x:DataType="models:GameModel">
                 <Button HorizontalAlignment="Stretch"
@@ -66,7 +66,7 @@
                                            FontSize="24"
                                            Foreground="White"/>
                                 
-                                <TextBlock Text="{Binding PlaytimeMinutes, StringFormat='\{0\} minutes played'}" 
+                                <TextBlock Text="{Binding PlayTime}" 
                                            Foreground="#67c1f5" 
                                            FontSize="14"
                                            FontWeight="SemiBold"/>
