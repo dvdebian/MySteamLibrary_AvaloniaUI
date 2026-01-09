@@ -1,64 +1,106 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using MySteamLibrary.Helpers;
-using MySteamLibrary.Models;
+﻿using System;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using System.Linq;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MySteamLibrary.Models;
+using MySteamLibrary.Services;
 using MySteamLibrary.ViewModels;
 
 namespace MySteamLibrary.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
 {
-    // The 'ActiveView' is typed as the base class (LibraryPresenterViewModel).
-    // This allows it to hold any child class: List, Grid, Cover, or Carousel.
+    private readonly SteamApiService _steamService = new();
+
     [ObservableProperty]
     private LibraryPresenterViewModel _activeView;
 
-    // Controls the visibility of the SettingsView overlay.
     [ObservableProperty]
     private bool _isSettingsOpen;
 
-    // --- NEW PROPERTIES FOR GAME DETAILS ---
-
-    // Controls the visibility of the GameDetails overlay.
     [ObservableProperty]
     private bool _isGameDetailsOpen;
 
-    // Holds the specific ViewModel instance for the game currently being viewed.
-    // When this is null, no game details are being processed.
+    // State to track if the background refresh is running
+    [ObservableProperty]
+    private bool _isRefreshing;
+
     [ObservableProperty]
     private GameDetailsViewModel? _currentDetails;
 
-    // ----------------------------------------
-
-    // Stores the current search query from the TextBox.
     [ObservableProperty]
     private string _searchText = string.Empty;
 
-    // Persistent instance of the Settings logic.
     public SettingsViewModel Settings { get; } = new();
 
-    // The master list of games loaded from our Helper.
-    private readonly ObservableCollection<GameModel> _allGames;
+    private readonly ObservableCollection<GameModel> _allGames = new();
 
     public MainViewModel()
     {
-        // 1. Load the dummy data once during initialization.
-        _allGames = DummyDataService.GetFakeGames();
-
-        // 2. Default to List View on startup.
         _activeView = new ListViewModel { Games = _allGames };
 
-        // Set up the "Callback". 
-        // We tell the SettingsViewModel: "When you call RequestClose, 
-        // I will run my ToggleSettings logic."
         Settings.RequestClose = () => IsSettingsOpen = false;
+
+        _ = LoadSteamLibraryAsync();
     }
 
     /// <summary>
-    /// Swaps the central content area by updating the ActiveView property.
-    /// This is triggered by the buttons in MainView.axaml.
+    /// Background task to fetch initial Steam data or Cache.
     /// </summary>
+    private async Task LoadSteamLibraryAsync()
+    {
+        try
+        {
+            var result = await _steamService.GetFullLibraryAsync();
+
+            _allGames.Clear();
+            foreach (var game in result)
+            {
+                _allGames.Add(game);
+            }
+
+            SelectMode("List");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to load library: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Manually triggers a deep refresh to fetch missing descriptions and images.
+    /// This uses the rate-limited batch process in the SteamApiService.
+    /// </summary>
+    [RelayCommand]
+    public async Task RefreshLibrary()
+    {
+        if (IsRefreshing) return;
+
+        try
+        {
+            IsRefreshing = true;
+
+            // 1. Fetch missing descriptions (this will take time due to 1.5s delay per game)
+            // It updates the objects inside _allGames directly.
+            await _steamService.RefreshDescriptionsAsync(_allGames);
+
+            // 2. Force a refresh of the current view to ensure all data is bound correctly
+            // Using the current view type to refresh
+            string currentType = ActiveView.GetType().Name.Replace("ViewModel", "");
+            SelectMode(currentType);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error during refresh: {ex.Message}");
+        }
+        finally
+        {
+            IsRefreshing = false;
+        }
+    }
+
     [RelayCommand]
     public void SelectMode(string mode)
     {
@@ -71,43 +113,25 @@ public partial class MainViewModel : ViewModelBase
         };
     }
 
-    /// <summary>
-    /// Toggles the Settings overlay boolean.
-    /// </summary>
     [RelayCommand]
     public void ToggleSettings()
     {
         IsSettingsOpen = !IsSettingsOpen;
     }
 
-    // --- NEW COMMANDS FOR GAME DETAILS ---
-
-    /// <summary>
-    /// Creates a new GameDetailsViewModel for the selected game and shows the overlay.
-    /// This will be called from your List, Grid, or Carousel views.
-    /// </summary>
     [RelayCommand]
     public void OpenGameDetails(GameModel game)
     {
-        // 1. Create the instance
         var detailsVm = new GameDetailsViewModel(game);
-
-        // 2. Hook up the Close logic (Best Practice)
         detailsVm.RequestClose = () => IsGameDetailsOpen = false;
-
-        // 3. Assign it to the property and show the overlay
         CurrentDetails = detailsVm;
         IsGameDetailsOpen = true;
     }
 
-    /// <summary>
-    /// Closes the details overlay.
-    /// </summary>
     [RelayCommand]
     public void CloseGameDetails()
     {
         IsGameDetailsOpen = false;
-        // Optional: Clear the memory by setting the details VM to null.
         CurrentDetails = null;
     }
 }
