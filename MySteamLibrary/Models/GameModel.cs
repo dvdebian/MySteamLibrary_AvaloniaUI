@@ -21,7 +21,9 @@ namespace MySteamLibrary.Models
         private string _description = string.Empty;
 
         // Raw playtime in minutes as returned by the Steam API
+        // NotifyPropertyChangedFor ensures the PlayTime string updates when this value changes
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(PlayTime))]
         private int _playtimeMinutes;
 
         // The file path or URL for the game cover/poster image

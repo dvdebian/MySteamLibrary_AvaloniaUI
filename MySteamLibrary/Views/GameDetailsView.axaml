@@ -1,33 +1,38 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:MySteamLibrary.ViewModels"
+             xmlns:conv="using:MySteamLibrary.Converters"
              x:Class="MySteamLibrary.Views.GameDetailsView"
              x:DataType="vm:GameDetailsViewModel">
 
+    <UserControl.Resources>
+        <conv:BitmapValueConverter x:Key="VariableImageConverter"/>
+    </UserControl.Resources>
+
     <UserControl.Styles>
-    <Style Selector="Button.CloseBtn">
-        <Setter Property="Background" Value="#3d4450"/>
-        <Setter Property="Foreground" Value="#9fa3a9"/>
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.2"/>
-                <BrushTransition Property="Foreground" Duration="0:0:0.2"/>
-            </Transitions>
-        </Setter>
-    </Style>
+        <Style Selector="Button.CloseBtn">
+            <Setter Property="Background" Value="#3d4450"/>
+            <Setter Property="Foreground" Value="#9fa3a9"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                    <BrushTransition Property="Foreground" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
+        </Style>
 
-    <Style Selector="Button.CloseBtn:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="#4d5460"/> 
-        <Setter Property="Foreground" Value="White"/>
-    </Style>
+        <Style Selector="Button.CloseBtn:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#4d5460"/> 
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
 
-    <Style Selector="TextBlock.Label">
-        <Setter Property="FontSize" Value="12"/>
-        <Setter Property="FontWeight" Value="Bold"/>
-        <Setter Property="Foreground" Value="#858d97"/>
-        <Setter Property="LetterSpacing" Value="1.5"/>
-    </Style>
-</UserControl.Styles>
+        <Style Selector="TextBlock.Label">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#858d97"/>
+            <Setter Property="LetterSpacing" Value="1.5"/>
+        </Style>
+    </UserControl.Styles>
 
     <Panel Background="#CC000000">
         <Button Command="{Binding CloseCommand}" 
@@ -50,7 +55,7 @@
                         CornerRadius="12,0,0,12" 
                         ClipToBounds="True"
                         Background="#101010">
-                    <Image Source="{Binding SelectedGame.ImagePath}" 
+                    <Image Source="{Binding SelectedGame.ImagePath, Converter={StaticResource VariableImageConverter}}" 
                            Stretch="UniformToFill"
                            VerticalAlignment="Center"
                            HorizontalAlignment="Center"/>
@@ -82,7 +87,7 @@
                             
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <TextBlock Text="TIME PLAYED" Classes="Label"/>
-                                <TextBlock Text="12.5 hours" 
+                                <TextBlock Text="{Binding SelectedGame.PlayTime}" 
                                            FontSize="13" 
                                            Foreground="#67c1f5"
                                            FontWeight="SemiBold"/>
