@@ -23,29 +23,42 @@
         </DataTemplate>
     </UserControl.DataTemplates>
 
-    <Grid RowDefinitions="Auto, *">
+    <Grid RowDefinitions="Auto, *" Background="{StaticResource SteamDarkBg}">
         
-        <StackPanel Grid.Row="0" Spacing="10" Margin="20">
-            <TextBlock Text="MY STEAM LIBRARY" FontSize="24" FontWeight="Bold" />
-            
-            <StackPanel Orientation="Horizontal" Spacing="5">
-                <Button Content="LIST" Command="{Binding SelectModeCommand}" CommandParameter="List" />
-                <Button Content="GRID" Command="{Binding SelectModeCommand}" CommandParameter="Grid" />
-                <Button Content="COVER" Command="{Binding SelectModeCommand}" CommandParameter="Cover" />
-                <Button Content="CAROUSEL" Command="{Binding SelectModeCommand}" CommandParameter="Carousel" />
+        <Border Grid.Row="0" Background="{StaticResource SteamHeaderBg}" Padding="20">
+            <StackPanel Spacing="15">
+                <TextBlock Text="MY STEAM LIBRARY" 
+                           FontSize="22" 
+                           FontWeight="Black" 
+                           Foreground="White"
+                           LetterSpacing="1"/>
                 
-                <Separator Margin="10,0" Width="1" Background="Gray"/>
-                <Button Content="SETTINGS" Command="{Binding ToggleSettingsCommand}" />
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                    <Button Classes="Nav" Content="LIST" Command="{Binding SelectModeCommand}" CommandParameter="List" />
+                    <Button Classes="Nav" Content="GRID" Command="{Binding SelectModeCommand}" CommandParameter="Grid" />
+                    <Button Classes="Nav" Content="COVER" Command="{Binding SelectModeCommand}" CommandParameter="Cover" />
+                    <Button Classes="Nav" Content="CAROUSEL" Command="{Binding SelectModeCommand}" CommandParameter="Carousel" />
+                    
+                    <Separator Margin="10,0" Width="1" Background="#3d4450"/>
+                    <Button Classes="Nav" Content="SETTINGS" Command="{Binding ToggleSettingsCommand}" />
+                </StackPanel>
+                
+                <TextBox Watermark="SEARCH" 
+                         Text="{Binding SearchText}" 
+                         MaxWidth="400" 
+                         HorizontalAlignment="Left"
+                         Background="#101a24"
+                         BorderThickness="0"
+                         CornerRadius="2"/>
             </StackPanel>
-            
-            <TextBox Watermark="SEARCH" Text="{Binding SearchText}" />
-        </StackPanel>
+        </Border>
 
         <ContentControl Grid.Row="1" Content="{Binding ActiveView}" />
+
         <Panel Grid.Row="0" Grid.RowSpan="2" IsVisible="{Binding IsSettingsOpen}">
-        <views:SettingsView 
-                            DataContext="{Binding Settings}" />
+            <views:SettingsView DataContext="{Binding Settings}" />
         </Panel>
+        
         <Panel Grid.Row="0" Grid.RowSpan="2" IsVisible="{Binding IsGameDetailsOpen}">
             <views:GameDetailsView DataContext="{Binding CurrentDetails}" />
         </Panel>

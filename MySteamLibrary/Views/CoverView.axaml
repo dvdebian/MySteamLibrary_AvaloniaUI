@@ -13,8 +13,7 @@
         
         <Border Grid.Row="0" Margin="20" CornerRadius="8" Background="#1a1d21">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10">
-                 <TextBlock Text="{Binding ModeName}" Foreground="Gray" HorizontalAlignment="Center"/>
-                 <TextBlock Text="SELECT A GAME TO VIEW DETAILS" Opacity="0.5" />
+                             <TextBlock Text="SELECT A GAME TO VIEW DETAILS" Opacity="0.5" />
             </StackPanel>
         </Border>
 

@@ -53,10 +53,6 @@
         </ScrollViewer>
 
         <StackPanel Grid.Row="1" Margin="0,0,0,40" HorizontalAlignment="Center">
-            <TextBlock Text="{Binding ModeName}" 
-                       Foreground="Gray" 
-                       HorizontalAlignment="Center" 
-                       FontSize="10"/>
             <TextBlock Text="GAME TITLE" 
                        FontSize="22" 
                        FontWeight="Bold" 

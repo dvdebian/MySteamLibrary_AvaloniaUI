@@ -11,8 +11,6 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="20" Spacing="10">
-            <TextBlock Text="{Binding ModeName}" Foreground="Gray" FontSize="12" />
-
             <ItemsControl ItemsSource="{Binding Games}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>

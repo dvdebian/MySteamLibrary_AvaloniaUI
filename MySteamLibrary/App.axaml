@@ -2,14 +2,54 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="MySteamLibrary.App"
              xmlns:local="using:MySteamLibrary"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
-
-    <Application.DataTemplates>
+             RequestedThemeVariant="Dark">
+             <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
+
+    <Application.Resources>
+        <SolidColorBrush x:Key="SteamDarkBg">#171a21</SolidColorBrush>
+        <SolidColorBrush x:Key="SteamHeaderBg">#1b2838</SolidColorBrush>
+        <SolidColorBrush x:Key="SteamBlueAccent">#66c0f4</SolidColorBrush>
+        <SolidColorBrush x:Key="SteamButtonDefault">#2a475e</SolidColorBrush>
+    </Application.Resources>
   
     <Application.Styles>
         <FluentTheme />
+
+        <Style Selector="Button.Nav">
+            <Setter Property="Background" Value="{StaticResource SteamButtonDefault}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        
+        <Style Selector="Button.Nav:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource SteamBlueAccent}"/>
+            <Setter Property="Foreground" Value="#171a21"/>
+        </Style>
+
+        <Style Selector="Button.GameItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button.GameItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#2a475e"/>
+        </Style>
+        
     </Application.Styles>
 </Application>
