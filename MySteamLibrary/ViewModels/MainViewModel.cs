@@ -11,6 +11,14 @@ using MySteamLibrary.ViewModels;
 
 namespace MySteamLibrary.ViewModels;
 
+// Future-proof sorting options
+public enum SortCriteria
+{
+    Alphabetical,
+    PlayTime,
+    AppId
+}
+
 public partial class MainViewModel : ViewModelBase
 {
     // Services for API data and local persistence
@@ -41,6 +49,10 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private string _searchText = string.Empty;
 
+    // Track the current sort mode (Default: Alphabetical)
+    [ObservableProperty]
+    private SortCriteria _currentSortMode = SortCriteria.Alphabetical;
+
     public SettingsViewModel Settings { get; } = new();
 
     // The master collection that all sub-views bind to
@@ -66,6 +78,7 @@ public partial class MainViewModel : ViewModelBase
 
     /// <summary>
     /// Initial load that only looks at the local cache.
+    /// Updated: Applies sorting after loading.
     /// </summary>
     private async Task InitializeLibraryAsync()
     {
@@ -75,11 +88,7 @@ public partial class MainViewModel : ViewModelBase
 
             if (cachedGames != null && cachedGames.Any())
             {
-                _allGames.Clear();
-                foreach (var game in cachedGames)
-                {
-                    _allGames.Add(game);
-                }
+                UpdateGameCollection(cachedGames);
             }
         }
         catch (Exception ex)
@@ -89,7 +98,28 @@ public partial class MainViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Centralized method to update the ObservableCollection and apply sorting.
+    /// </summary>
+    private void UpdateGameCollection(IEnumerable<GameModel> games)
+    {
+        // Apply the current sort criteria
+        var sorted = CurrentSortMode switch
+        {
+            SortCriteria.PlayTime => games.OrderByDescending(g => g.PlaytimeMinutes),
+            SortCriteria.AppId => games.OrderBy(g => g.AppId),
+            _ => games.OrderBy(g => g.Title) // Alphabetical default
+        };
+
+        _allGames.Clear();
+        foreach (var game in sorted)
+        {
+            _allGames.Add(game);
+        }
+    }
+
+    /// <summary>
     /// Stage-based Refresh: 1. Skeleton UI, 2. Background Images, 3. Background Descriptions.
+    /// Updated: Applies sorting to the fresh list.
     /// </summary>
     [RelayCommand]
     public async Task RefreshLibrary()
@@ -105,17 +135,13 @@ public partial class MainViewModel : ViewModelBase
 
             if (freshGames != null && freshGames.Any())
             {
-                _allGames.Clear();
-                foreach (var game in freshGames)
-                {
-                    _allGames.Add(game);
-                }
+                // Sort and display the fresh games immediately
+                UpdateGameCollection(freshGames);
 
                 // Initial cache save with skeletons
                 await _cacheService.SaveLibraryCacheAsync(_allGames.ToList());
 
                 // STAGE 2 & 3: Launch background updates without 'awaiting' them here
-                // This allows IsRefreshing to finish quickly so the UI isn't blocked.
                 _ = Task.Run(() => BackgroundUpdateDataAsync());
             }
         }
@@ -136,8 +162,7 @@ public partial class MainViewModel : ViewModelBase
     {
         var gameList = _allGames.ToList();
 
-        // 1. STAGE 2: Fast Parallel Image Download
-        // We run these in parallel because Steam's CDN is fast and not rate-limited like the Store API.
+        // 1. STAGE 2: Parallel Image Download
         var imageTasks = gameList.Select(game => _steamService.LoadGameImageAsync(game));
         await Task.WhenAll(imageTasks);
 
@@ -145,7 +170,6 @@ public partial class MainViewModel : ViewModelBase
         await _cacheService.SaveLibraryCacheAsync(_allGames.ToList());
 
         // 2. STAGE 3: Sequential Description Fetch (Rate-limited)
-        // This method handles its own internal 1.5s delay and periodic cache saving.
         await _steamService.RefreshDescriptionsAsync(_allGames);
     }
 
@@ -181,5 +205,15 @@ public partial class MainViewModel : ViewModelBase
     {
         IsGameDetailsOpen = false;
         CurrentDetails = null;
+    }
+
+    /// <summary>
+    /// Future use: Allows changing the sort mode and refreshing the UI.
+    /// </summary>
+    [RelayCommand]
+    public void ChangeSortMode(SortCriteria newCriteria)
+    {
+        CurrentSortMode = newCriteria;
+        UpdateGameCollection(_allGames.ToList());
     }
 }
