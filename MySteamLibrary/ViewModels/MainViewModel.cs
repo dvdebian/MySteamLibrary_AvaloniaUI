@@ -18,6 +18,19 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isSettingsOpen;
 
+    // --- NEW PROPERTIES FOR GAME DETAILS ---
+
+    // Controls the visibility of the GameDetails overlay.
+    [ObservableProperty]
+    private bool _isGameDetailsOpen;
+
+    // Holds the specific ViewModel instance for the game currently being viewed.
+    // When this is null, no game details are being processed.
+    [ObservableProperty]
+    private GameDetailsViewModel? _currentDetails;
+
+    // ----------------------------------------
+
     // Stores the current search query from the TextBox.
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -34,7 +47,6 @@ public partial class MainViewModel : ViewModelBase
         _allGames = DummyDataService.GetFakeGames();
 
         // 2. Default to List View on startup.
-        // We initialize the specific ViewModel and pass it the game list.
         _activeView = new ListViewModel { Games = _allGames };
     }
 
@@ -45,8 +57,6 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     public void SelectMode(string mode)
     {
-        // We create a new instance of the requested view mode.
-        // Each instance is assigned the same game collection.
         ActiveView = mode switch
         {
             "Grid" => new GridViewModel { Games = _allGames },
@@ -63,5 +73,31 @@ public partial class MainViewModel : ViewModelBase
     public void ToggleSettings()
     {
         IsSettingsOpen = !IsSettingsOpen;
+    }
+
+    // --- NEW COMMANDS FOR GAME DETAILS ---
+
+    /// <summary>
+    /// Creates a new GameDetailsViewModel for the selected game and shows the overlay.
+    /// This will be called from your List, Grid, or Carousel views.
+    /// </summary>
+    [RelayCommand]
+    public void OpenGameDetails(GameModel game)
+    {
+        // Initialize the new ViewModel with the specific game data.
+        CurrentDetails = new GameDetailsViewModel(game);
+        // Show the overlay.
+        IsGameDetailsOpen = true;
+    }
+
+    /// <summary>
+    /// Closes the details overlay.
+    /// </summary>
+    [RelayCommand]
+    public void CloseGameDetails()
+    {
+        IsGameDetailsOpen = false;
+        // Optional: Clear the memory by setting the details VM to null.
+        CurrentDetails = null;
     }
 }

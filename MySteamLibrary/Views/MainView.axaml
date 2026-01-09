@@ -46,5 +46,8 @@
         <views:SettingsView 
                             DataContext="{Binding Settings}" />
         </Panel>
+        <Panel Grid.Row="0" Grid.RowSpan="2" IsVisible="{Binding IsGameDetailsOpen}">
+            <views:GameDetailsView DataContext="{Binding CurrentDetails}" />
+        </Panel>
     </Grid>
 </UserControl>
