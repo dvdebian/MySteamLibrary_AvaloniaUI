@@ -1,9 +1,22 @@
-﻿namespace MySteamLibrary.ViewModels;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using MySteamLibrary.Models;
+using System.Collections.ObjectModel;
+using System.Linq;
 
-public partial class CoverViewModel : LibraryPresenterViewModel
+namespace MySteamLibrary.ViewModels
 {
-    public CoverViewModel()
+    public partial class CoverViewModel : LibraryPresenterViewModel
     {
-        ModeName = "Cover View";
+        [ObservableProperty]
+        private GameModel? _selectedGame;
+
+        public CoverViewModel()
+        {
+            // Initializing with the first game if available
+            if (Games.Any())
+            {
+                SelectedGame = Games.First();
+            }
+        }
     }
 }

@@ -10,9 +10,11 @@
              x:DataType="vm:CarouselViewModel">
 
     <Grid RowDefinitions="*, Auto">
-        <ScrollViewer Grid.Row="0" 
+        <ScrollViewer x:Name="CarouselScroll"
+                      Grid.Row="0" 
                       HorizontalScrollBarVisibility="Hidden" 
-                      VerticalScrollBarVisibility="Disabled">
+                      VerticalScrollBarVisibility="Disabled"
+                      PointerWheelChanged="OnPointerWheelChanged">
             <ItemsControl ItemsSource="{Binding Games}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
