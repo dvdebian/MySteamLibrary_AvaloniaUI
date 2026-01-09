@@ -5,9 +5,15 @@
              xmlns:vm="using:MySteamLibrary.ViewModels"
              xmlns:models="using:MySteamLibrary.Models"
              xmlns:views="using:MySteamLibrary.Views"
+             xmlns:conv="using:MySteamLibrary.Converters"
+             xmlns:controls="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.ItemsRepeater"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="MySteamLibrary.Views.GridView"
              x:DataType="vm:GridViewModel">
+
+    <UserControl.Resources>
+        <conv:BitmapValueConverter x:Key="VariableImageConverter"/>
+    </UserControl.Resources>
 
     <UserControl.Styles>
         <Style Selector="Button.GameItem">
@@ -17,7 +23,6 @@
             <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
             <Setter Property="Transitions">
                 <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.1"/>
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15"/>
                 </Transitions>
             </Setter>
@@ -31,50 +36,51 @@
     </UserControl.Styles>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="20" Spacing="10">
-            <ItemsControl ItemsSource="{Binding Games}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
+        <controls:ItemsRepeater ItemsSource="{Binding Games}" Margin="20">
+            <controls:ItemsRepeater.Layout>
+                <UniformGridLayout ItemsJustification="Center" 
+                                   Orientation="Horizontal" 
+                                   MinItemWidth="170" 
+                                   MinItemHeight="280" />
+            </controls:ItemsRepeater.Layout>
 
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="models:GameModel">
-                        <Button Classes="GameItem"
-                                VerticalAlignment="Top" 
-                                Margin="5"
-                                Command="{Binding $parent[views:MainView].((vm:MainViewModel)DataContext).OpenGameDetailsCommand}"
-                                CommandParameter="{Binding}">
-                            
-                            <StackPanel Width="150">
-                                <Border CornerRadius="4" 
-                                        ClipToBounds="True" 
-                                        Height="225" 
-                                        Background="#2a2e33">
-                                    <Panel>
-                                        <Image Source="{Binding ImagePath}" Stretch="UniformToFill"/>
-                                        <TextBlock Text="POSTER" 
-                                                   IsVisible="{Binding ImagePath, Converter={x:Static ObjectConverters.IsNull}}"
-                                                   VerticalAlignment="Center" 
-                                                   HorizontalAlignment="Center" 
-                                                   Opacity="0.5"/>
-                                    </Panel>
-                                </Border>
+            <controls:ItemsRepeater.ItemTemplate>
+                <DataTemplate x:DataType="models:GameModel">
+                    <Button Classes="GameItem"
+                            VerticalAlignment="Top" 
+                            Margin="5"
+                            Command="{Binding $parent[views:MainView].((vm:MainViewModel)DataContext).OpenGameDetailsCommand}"
+                            CommandParameter="{Binding}">
+                        
+                        <StackPanel Width="150">
+                            <Border CornerRadius="4" 
+                                    ClipToBounds="True" 
+                                    Height="225" 
+                                    Background="#2a2e33">
+                                <Panel>
+                                    <Image Source="{Binding ImagePath, Converter={StaticResource VariableImageConverter}}" 
+                                           Stretch="UniformToFill"/>
+                                    
+                                    <TextBlock Text="POSTER" 
+                                               IsVisible="{Binding ImagePath, Converter={x:Static ObjectConverters.IsNull}}"
+                                               VerticalAlignment="Center" 
+                                               HorizontalAlignment="Center" 
+                                               Opacity="0.5"/>
+                                </Panel>
+                            </Border>
 
-                                <TextBlock Text="{Binding Title}" 
-                                           HorizontalAlignment="Center" 
-                                           Margin="0,10,0,0" 
-                                           FontSize="14" 
-                                           FontWeight="SemiBold"
-                                           Foreground="White"
-                                           TextAlignment="Center"
-                                           TextWrapping="Wrap"/>
-                            </StackPanel>
-                        </Button>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </StackPanel>
+                            <TextBlock Text="{Binding Title}" 
+                                       HorizontalAlignment="Center" 
+                                       Margin="0,10,0,0" 
+                                       FontSize="14" 
+                                       FontWeight="SemiBold"
+                                       Foreground="White"
+                                       TextAlignment="Center"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Button>
+                </DataTemplate>
+            </controls:ItemsRepeater.ItemTemplate>
+        </controls:ItemsRepeater>
     </ScrollViewer>
 </UserControl>

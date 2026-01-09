@@ -5,6 +5,7 @@
              xmlns:vm="using:MySteamLibrary.ViewModels"
              xmlns:models="using:MySteamLibrary.Models"
              xmlns:views="using:MySteamLibrary.Views"
+             xmlns:controls="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.ItemsRepeater"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="MySteamLibrary.Views.CarouselView"
              x:DataType="vm:CarouselViewModel">
@@ -15,18 +16,16 @@
                       HorizontalScrollBarVisibility="Hidden" 
                       VerticalScrollBarVisibility="Disabled"
                       PointerWheelChanged="OnPointerWheelChanged">
-            <ItemsControl ItemsSource="{Binding Games}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" 
-                                    VerticalAlignment="Center" 
-                                    HorizontalAlignment="Center" 
-                                    Spacing="-40" 
-                                    Margin="50,0"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
+            
+            <controls:ItemsRepeater ItemsSource="{Binding Games}" 
+                                    Margin="50,0"
+                                    VerticalAlignment="Center">
+                <controls:ItemsRepeater.Layout>
+                    <StackLayout Orientation="Horizontal" 
+                                 Spacing="-40" />
+                </controls:ItemsRepeater.Layout>
 
-                <ItemsControl.ItemTemplate>
+                <controls:ItemsRepeater.ItemTemplate>
                     <DataTemplate x:DataType="models:GameModel">
                         <Button Background="Transparent"
                                 BorderThickness="0"
@@ -45,13 +44,14 @@
                                                VerticalAlignment="Center" 
                                                HorizontalAlignment="Center"
                                                TextAlignment="Center"
-                                               Padding="10"/>
+                                               Padding="10"
+                                               TextWrapping="Wrap"/>
                                 </Panel>
                             </Border>
                         </Button>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </controls:ItemsRepeater.ItemTemplate>
+            </controls:ItemsRepeater>
         </ScrollViewer>
 
         <StackPanel Grid.Row="1" Margin="0,0,0,40" HorizontalAlignment="Center">

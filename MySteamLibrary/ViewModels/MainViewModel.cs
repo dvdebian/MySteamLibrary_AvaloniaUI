@@ -14,6 +14,12 @@ public partial class MainViewModel : ViewModelBase
 {
     private readonly SteamApiService _steamService = new();
 
+    // 1. Fields to store the pre-created view models
+    private readonly ListViewModel _listView;
+    private readonly GridViewModel _gridView;
+    private readonly CoverViewModel _coverView;
+    private readonly CarouselViewModel _carouselView;
+
     [ObservableProperty]
     private LibraryPresenterViewModel _activeView;
 
@@ -23,7 +29,6 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isGameDetailsOpen;
 
-    // State to track if the background refresh is running
     [ObservableProperty]
     private bool _isRefreshing;
 
@@ -39,16 +44,20 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel()
     {
-        _activeView = new ListViewModel { Games = _allGames };
+        // 2. Initialize each view model once, passing the master game collection
+        _listView = new ListViewModel { Games = _allGames };
+        _gridView = new GridViewModel { Games = _allGames };
+        _coverView = new CoverViewModel { Games = _allGames };
+        _carouselView = new CarouselViewModel { Games = _allGames };
+
+        // Set initial view reference
+        _activeView = _listView;
 
         Settings.RequestClose = () => IsSettingsOpen = false;
 
         _ = LoadSteamLibraryAsync();
     }
 
-    /// <summary>
-    /// Background task to fetch initial Steam data or Cache.
-    /// </summary>
     private async Task LoadSteamLibraryAsync()
     {
         try
@@ -69,10 +78,6 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Manually triggers a deep refresh to fetch missing descriptions and images.
-    /// This uses the rate-limited batch process in the SteamApiService.
-    /// </summary>
     [RelayCommand]
     public async Task RefreshLibrary()
     {
@@ -81,15 +86,10 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             IsRefreshing = true;
-
-            // 1. Fetch missing descriptions (this will take time due to 1.5s delay per game)
-            // It updates the objects inside _allGames directly.
             await _steamService.RefreshDescriptionsAsync(_allGames);
 
-            // 2. Force a refresh of the current view to ensure all data is bound correctly
-            // Using the current view type to refresh
-            string currentType = ActiveView.GetType().Name.Replace("ViewModel", "");
-            SelectMode(currentType);
+            // Refresh logic: Since instances are cached, no need to re-create
+            // UI bindings will update via ObservableProperty in GameModel
         }
         catch (Exception ex)
         {
@@ -101,15 +101,18 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Swaps the ActiveView to a pre-existing instance instead of creating a 'new' one.
+    /// </summary>
     [RelayCommand]
     public void SelectMode(string mode)
     {
         ActiveView = mode switch
         {
-            "Grid" => new GridViewModel { Games = _allGames },
-            "Cover" => new CoverViewModel { Games = _allGames },
-            "Carousel" => new CarouselViewModel { Games = _allGames },
-            _ => new ListViewModel { Games = _allGames }
+            "Grid" => _gridView,
+            "Cover" => _coverView,
+            "Carousel" => _carouselView,
+            _ => _listView
         };
     }
 
