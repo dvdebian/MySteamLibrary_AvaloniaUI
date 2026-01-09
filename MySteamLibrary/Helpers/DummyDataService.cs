@@ -36,7 +36,7 @@ public static class DummyDataService
             },
             new GameModel
             {
-                Title = "The Witcher 3: Wild Hunt",
+                Title = "The Witcher 3: Wild Hunt, this is just a test for a long title",
                 PlayTime = "200 hours",
                 Description = "A story-driven open world RPG set in a visually stunning fantasy universe.",
                 AppId = 292030

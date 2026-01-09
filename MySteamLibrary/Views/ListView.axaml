@@ -16,7 +16,7 @@
         </Style>
 
         <Style Selector="Button:pointerover Border.GameRow">
-            <Setter Property="Background" Value="#3d4450"/>
+            <Setter Property="Background" Value="#3367c1f5"/>
         </Style>
     </UserControl.Styles>
 
