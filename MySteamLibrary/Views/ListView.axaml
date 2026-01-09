@@ -9,8 +9,19 @@
              x:Class="MySteamLibrary.Views.ListView"
              x:DataType="vm:ListViewModel">
 
+    <UserControl.Styles>
+        <Style Selector="Border.GameRow">
+            <Setter Property="Background" Value="#1e2329"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style Selector="Button:pointerover Border.GameRow">
+            <Setter Property="Background" Value="#3d4450"/>
+        </Style>
+    </UserControl.Styles>
+
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="20" Spacing="10">                   
+        <StackPanel Margin="20" Spacing="12">                   
             <ItemsControl ItemsSource="{Binding Games}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="models:GameModel">
@@ -19,34 +30,37 @@
                                 Background="Transparent"
                                 BorderThickness="0"
                                 Padding="0"
-                                Margin="0,2"
+                                Margin="0,4"
                                 Command="{Binding $parent[views:MainView].((vm:MainViewModel)DataContext).OpenGameDetailsCommand}"
                                 CommandParameter="{Binding}">
                             
-                            <Border Background="#1e2329" 
-                                    Padding="10" 
-                                    CornerRadius="4">
+                            <Border Classes="GameRow" 
+                                    Padding="15" 
+                                    CornerRadius="8">
                                 <Grid ColumnDefinitions="Auto, *">
                                     
-                                    <Panel Grid.Column="0" Width="60" Height="90" Background="#2a2e33">
+                                    <Panel Grid.Column="0" Width="120" Height="180" Background="#2a2e33">
                                         <Image Source="{Binding ImagePath}" Stretch="UniformToFill"/>
                                     </Panel>
                                     
-                                    <StackPanel Grid.Column="1" Margin="15,0" VerticalAlignment="Center">
+                                    <StackPanel Grid.Column="1" Margin="25,0" VerticalAlignment="Center" Spacing="5">
                                         <TextBlock Text="{Binding Title}" 
-                                                   FontWeight="Bold" 
-                                                   FontSize="16"/>
+                                                   FontWeight="Black" 
+                                                   FontSize="24"
+                                                   Foreground="White"/>
                                         
                                         <TextBlock Text="{Binding PlayTime, StringFormat='\{0\} hours played'}" 
-                                                   Foreground="SkyBlue" 
-                                                   FontSize="12"/>
+                                                   Foreground="#67c1f5" 
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"/>
                                         
                                         <TextBlock Text="{Binding Description}" 
-                                                   Opacity="0.7" 
+                                                   Opacity="0.6" 
                                                    TextWrapping="Wrap" 
-                                                   MaxLines="2" 
-                                                   FontSize="11"
-                                                   Margin="0,5,0,0"/>
+                                                   MaxLines="3" 
+                                                   FontSize="13"
+                                                   LineHeight="20"
+                                                   Margin="0,10,0,0"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
