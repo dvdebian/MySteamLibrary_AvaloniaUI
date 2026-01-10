@@ -18,7 +18,7 @@
         <Style Selector="ListBoxItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="40,60"/> 
+            <Setter Property="Margin" Value="40,0"/> 
             <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
             <Setter Property="Transitions">
                 <Transitions>
@@ -37,49 +37,47 @@
         </Style>
     </UserControl.Styles>
 
-    <ListBox x:Name="CoverList"
-             ItemsSource="{Binding Games}"
-             SelectedItem="{Binding Parent.SelectedGame}"
-             Background="Transparent"
-             PointerWheelChanged="OnPointerWheelChanged"
-             ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-             ScrollViewer.VerticalScrollBarVisibility="Disabled">
-        
-        <ListBox.Template>
-            <ControlTemplate>
-                <Border Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="{TemplateBinding CornerRadius}">
-                    <ScrollViewer Name="PART_ScrollViewer"
-                                  HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
-                                  VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
-                        <ScrollViewer.Transitions>
-                            <Transitions>
-                                <VectorTransition Property="Offset" Duration="0:0:0.25" Easing="CubicEaseOut"/>
-                            </Transitions>
-                        </ScrollViewer.Transitions>
+    <Grid RowDefinitions="*, Auto">
+        <ListBox x:Name="CoverList"
+                 Grid.Row="0"
+                 ItemsSource="{Binding Games}"
+                 SelectedItem="{Binding Parent.SelectedGame}"
+                 Background="Transparent"
+                 PointerWheelChanged="OnPointerWheelChanged"
+                 ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+                 ScrollViewer.VerticalScrollBarVisibility="Disabled">
+            
+            <ListBox.Template>
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}">
+                        <ScrollViewer Name="PART_ScrollViewer"
+                                      HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                                      VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
+                            <ScrollViewer.Transitions>
+                                <Transitions>
+                                    <VectorTransition Property="Offset" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                                </Transitions>
+                            </ScrollViewer.Transitions>
 
-                        <Border Padding="{Binding Bounds.Width, 
-                                         RelativeSource={RelativeSource TemplatedParent}, 
-                                         Converter={StaticResource CenterPaddingConverter}}">
-                            <ItemsPresenter Name="PART_ItemsPresenter"
-                                            ItemsPanel="{TemplateBinding ItemsPanel}" />
-                        </Border>
-                    </ScrollViewer>
-                </Border>
-            </ControlTemplate>
-        </ListBox.Template>
+                            <Border Padding="{Binding Bounds.Width, 
+                                             RelativeSource={RelativeSource TemplatedParent}, 
+                                             Converter={StaticResource CenterPaddingConverter}}">
+                                <ItemsPresenter Name="PART_ItemsPresenter"
+                                                ItemsPanel="{TemplateBinding ItemsPanel}" />
+                            </Border>
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </ListBox.Template>
 
-        <ListBox.ItemsPanel>
-            <ItemsPanelTemplate>
-                <VirtualizingStackPanel Orientation="Horizontal" VerticalAlignment="Center"/>
-            </ItemsPanelTemplate>
-        </ListBox.ItemsPanel>
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel Orientation="Horizontal" VerticalAlignment="Center"/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
 
-        <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="models:GameModel">
-                <StackPanel Spacing="15" Width="220">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="models:GameModel">
                     <Border Width="220" Height="330" 
                             Background="#2a2e33" 
                             CornerRadius="6" 
@@ -90,15 +88,28 @@
                                    Stretch="UniformToFill"/>
                         </Panel>
                     </Border>
-                    <TextBlock Text="{Binding Title}" 
-                               HorizontalAlignment="Center" 
-                               FontSize="16" 
-                               FontWeight="Bold"
-                               Foreground="White"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap"/>
-                </StackPanel>
-            </DataTemplate>
-        </ListBox.ItemTemplate>
-    </ListBox>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Grid.Row="1" 
+            Margin="0,0,0,50" 
+            Spacing="5" 
+            HorizontalAlignment="Center"
+            DataContext="{Binding Parent.SelectedGame}">
+    
+    <TextBlock Text="{Binding Title}" 
+               FontSize="32" 
+               FontWeight="ExtraBold"
+               Foreground="White"
+               TextAlignment="Center"/>
+    
+    <TextBlock Text="{Binding PlayTime, StringFormat='{}{0} HOURS PLAYED'}" 
+               FontSize="14" 
+               FontWeight="SemiBold"
+               Foreground="#99ffffff"
+               TextAlignment="Center"
+               LetterSpacing="2"/>
+</StackPanel>
+    </Grid>
 </UserControl>
