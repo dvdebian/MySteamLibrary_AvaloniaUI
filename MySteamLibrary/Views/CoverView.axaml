@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:MySteamLibrary.ViewModels"
              xmlns:models="using:MySteamLibrary.Models"
-             xmlns:views="using:MySteamLibrary.Views"
              xmlns:conv="using:MySteamLibrary.Converters"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="MySteamLibrary.Views.CoverView"
@@ -12,13 +11,15 @@
 
     <UserControl.Resources>
         <conv:BitmapValueConverter x:Key="VariableImageConverter"/>
+        <conv:CenterPaddingConverter x:Key="CenterPaddingConverter"/>
     </UserControl.Resources>
 
     <UserControl.Styles>
         <Style Selector="ListBoxItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="40,60"/> <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
+            <Setter Property="Margin" Value="40,60"/> 
+            <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
             <Setter Property="Transitions">
                 <Transitions>
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
@@ -34,19 +35,36 @@
         <Style Selector="ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
         </Style>
-        <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
     </UserControl.Styles>
 
     <ListBox x:Name="CoverList"
              ItemsSource="{Binding Games}"
-             SelectedItem="{Binding SelectedGame}"
+             SelectedItem="{Binding Parent.SelectedGame}"
              Background="Transparent"
              PointerWheelChanged="OnPointerWheelChanged"
              ScrollViewer.HorizontalScrollBarVisibility="Hidden"
              ScrollViewer.VerticalScrollBarVisibility="Disabled">
         
+        <ListBox.Template>
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}">
+                    <ScrollViewer Name="PART_ScrollViewer"
+                                  HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                                  VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
+                        <Border Padding="{Binding Bounds.Width, 
+                                         RelativeSource={RelativeSource TemplatedParent}, 
+                                         Converter={StaticResource CenterPaddingConverter}}">
+                            <ItemsPresenter Name="PART_ItemsPresenter"
+                                            ItemsPanel="{TemplateBinding ItemsPanel}" />
+                        </Border>
+                    </ScrollViewer>
+                </Border>
+            </ControlTemplate>
+        </ListBox.Template>
+
         <ListBox.ItemsPanel>
             <ItemsPanelTemplate>
                 <VirtualizingStackPanel Orientation="Horizontal" VerticalAlignment="Center"/>
@@ -66,7 +84,6 @@
                                    Stretch="UniformToFill"/>
                         </Panel>
                     </Border>
-                    
                     <TextBlock Text="{Binding Title}" 
                                HorizontalAlignment="Center" 
                                FontSize="16" 

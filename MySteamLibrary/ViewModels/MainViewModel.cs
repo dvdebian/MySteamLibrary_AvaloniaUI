@@ -11,6 +11,9 @@ using MySteamLibrary.ViewModels;
 
 namespace MySteamLibrary.ViewModels;
 
+/// <summary>
+/// Defines the available sorting methods for the library.
+/// </summary>
 public enum SortCriteria
 {
     Alphabetical,
@@ -18,19 +21,27 @@ public enum SortCriteria
     AppId
 }
 
+/// <summary>
+/// The primary controller for the application.
+/// Manages navigation, data orchestration, and global state like selection and searching.
+/// </summary>
 public partial class MainViewModel : ViewModelBase
 {
+    // Business logic services
     private readonly SteamApiService _steamService = new();
     private readonly CacheService _cacheService = new();
 
+    // View instances held in memory to preserve state (like scroll position) when switching views
     private readonly ListViewModel _listView;
     private readonly GridViewModel _gridView;
     private readonly CoverViewModel _coverView;
     private readonly CarouselViewModel _carouselView;
 
+    // The current view being displayed in the MainView's ContentControl
     [ObservableProperty]
     private LibraryPresenterViewModel _activeView;
 
+    // UI State flags for overlays and loading indicators
     [ObservableProperty]
     private bool _isSettingsOpen;
 
@@ -40,46 +51,68 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isRefreshing;
 
+    // Holds the ViewModel for the currently inspected game
     [ObservableProperty]
     private GameDetailsViewModel? _currentDetails;
 
+    // Bound to the search bar; triggers OnSearchTextChanged when modified
     [ObservableProperty]
     private string _searchText = string.Empty;
 
+    // The user's preferred sorting method
     [ObservableProperty]
     private SortCriteria _currentSortMode = SortCriteria.Alphabetical;
 
+    /// <summary>
+    /// Configuration and user credentials logic.
+    /// Declared as a property so it is accessible throughout the class and to the UI.
+    /// </summary>
     public SettingsViewModel Settings { get; } = new();
 
-    // The collection used by all views for display
+    /// <summary>
+    /// GLOBAL SELECTION: This is the single source of truth for the "focused" game.
+    /// Centered views (Cover/Carousel) bind to this to know which item to move to the middle.
+    /// </summary>
+    [ObservableProperty]
+    private GameModel? _selectedGame;
+
+    // The collection bound to all UI views (List, Grid, etc.)
     private readonly ObservableCollection<GameModel> _allGames = new();
 
-    // The hidden master list that stores everything in memory for instant searching
+    // The hidden 'Source of Truth' containing every game, used for high-speed in-memory filtering
     private readonly List<GameModel> _masterLibrary = new();
 
     public MainViewModel()
     {
-        _listView = new ListViewModel { Games = _allGames };
-        _gridView = new GridViewModel { Games = _allGames };
-        _coverView = new CoverViewModel { Games = _allGames };
-        _carouselView = new CarouselViewModel { Games = _allGames };
+        // Initialize sub-viewmodels and pass 'this' as the Parent.
+        // This allows sub-views to access Parent.SelectedGame for global syncing.
+        _listView = new ListViewModel { Games = _allGames, Parent = this };
+        _gridView = new GridViewModel { Games = _allGames, Parent = this };
+        _coverView = new CoverViewModel { Games = _allGames, Parent = this };
+        _carouselView = new CarouselViewModel { Games = _allGames, Parent = this };
 
+        // Start the application in List view by default
         _activeView = _listView;
 
+        // Callback to close the settings overlay from within the SettingsViewModel
         Settings.RequestClose = () => IsSettingsOpen = false;
 
+        // Load data from local disk immediately on startup
         _ = InitializeLibraryAsync();
     }
 
     /// <summary>
-    /// Triggered automatically by CommunityToolkit when SearchText changes.
-    /// This ensures live filtering as the user types.
+    /// Automatically called by the CommunityToolkit whenever the SearchText property changes.
+    /// Triggers the filtering logic to update the UI in real-time.
     /// </summary>
     partial void OnSearchTextChanged(string value)
     {
         ApplyFilteringAndSorting();
     }
 
+    /// <summary>
+    /// Loads the library from the local JSON cache to provide an instant startup experience.
+    /// </summary>
     private async Task InitializeLibraryAsync()
     {
         try
@@ -88,11 +121,10 @@ public partial class MainViewModel : ViewModelBase
 
             if (cachedGames != null && cachedGames.Any())
             {
-                // Load into memory first
                 _masterLibrary.Clear();
                 _masterLibrary.AddRange(cachedGames);
 
-                // Show in UI
+                // Refresh the visible collection based on current sort/filter
                 ApplyFilteringAndSorting();
             }
         }
@@ -103,17 +135,17 @@ public partial class MainViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Processes the master library through search and sort filters, then updates the UI collection.
-    /// Done entirely in memory for zero lag.
+    /// The 'Processor' method. Takes the master list, applies the search filter,
+    /// applies the sort order, and updates the observable collection for the UI.
     /// </summary>
     private void ApplyFilteringAndSorting()
     {
-        // 1. Filter based on search text
+        // Step 1: Filter by Title (Case-insensitive)
         var filtered = string.IsNullOrWhiteSpace(SearchText)
             ? _masterLibrary
             : _masterLibrary.Where(g => g.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
 
-        // 2. Sort based on criteria
+        // Step 2: Order the filtered results
         var sorted = CurrentSortMode switch
         {
             SortCriteria.PlayTime => filtered.OrderByDescending(g => g.PlaytimeMinutes),
@@ -121,7 +153,7 @@ public partial class MainViewModel : ViewModelBase
             _ => filtered.OrderBy(g => g.Title)
         };
 
-        // 3. Update the display collection
+        // Step 3: Update UI collection (Clear/Add is used to keep the same instance bound to views)
         _allGames.Clear();
         foreach (var game in sorted)
         {
@@ -129,6 +161,10 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Fetches fresh data from Steam API. 
+    /// Updates the Master list first, then triggers the UI update.
+    /// </summary>
     [RelayCommand]
     public async Task RefreshLibrary()
     {
@@ -141,13 +177,11 @@ public partial class MainViewModel : ViewModelBase
 
             if (freshGames != null && freshGames.Any())
             {
-                // Update master memory
                 _masterLibrary.Clear();
                 _masterLibrary.AddRange(freshGames);
-
-                // Update UI
                 ApplyFilteringAndSorting();
 
+                // Save to disk and start fetching high-res images/descriptions in the background
                 await _cacheService.SaveLibraryCacheAsync(_masterLibrary);
                 _ = Task.Run(() => BackgroundUpdateDataAsync());
             }
@@ -162,9 +196,12 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Handles the secondary and tertiary stages of loading (Images and Descriptions).
+    /// Updates the objects in the master library directly.
+    /// </summary>
     private async Task BackgroundUpdateDataAsync()
     {
-        // Update images and descriptions directly on the master objects
         var imageTasks = _masterLibrary.Select(game => _steamService.LoadGameImageAsync(game));
         await Task.WhenAll(imageTasks);
 
@@ -172,6 +209,9 @@ public partial class MainViewModel : ViewModelBase
         await _steamService.RefreshDescriptionsAsync(_masterLibrary);
     }
 
+    /// <summary>
+    /// Switches the active view mode and ensures a selection exists for centering-based views.
+    /// </summary>
     [RelayCommand]
     public void SelectMode(string mode)
     {
@@ -182,11 +222,23 @@ public partial class MainViewModel : ViewModelBase
             "Carousel" => _carouselView,
             _ => _listView
         };
+
+        // If switching to a view that requires a centered anchor, auto-select the first game if none selected.
+        if (mode == "Cover" || mode == "Carousel")
+        {
+            if (SelectedGame == null && _allGames.Any())
+            {
+                SelectedGame = _allGames[0];
+            }
+        }
     }
 
     [RelayCommand]
     public void ToggleSettings() => IsSettingsOpen = !IsSettingsOpen;
 
+    /// <summary>
+    /// Navigates to the details view for a specific game.
+    /// </summary>
     [RelayCommand]
     public void OpenGameDetails(GameModel game)
     {
@@ -202,6 +254,9 @@ public partial class MainViewModel : ViewModelBase
         CurrentDetails = null;
     }
 
+    /// <summary>
+    /// Updates the sort criteria and refreshes the displayed list.
+    /// </summary>
     [RelayCommand]
     public void ChangeSortMode(SortCriteria newCriteria)
     {
