@@ -37,13 +37,13 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid RowDefinitions="*, Auto">
+    <Panel>
         <ListBox x:Name="CoverList"
-                 Grid.Row="0"
                  ItemsSource="{Binding Games}"
                  SelectedItem="{Binding Parent.SelectedGame}"
                  Background="Transparent"
                  PointerWheelChanged="OnPointerWheelChanged"
+                 Margin="0,0,0,100"
                  ScrollViewer.HorizontalScrollBarVisibility="Hidden"
                  ScrollViewer.VerticalScrollBarVisibility="Disabled">
             
@@ -92,24 +92,25 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <StackPanel Grid.Row="1" 
-            Margin="0,0,0,50" 
-            Spacing="5" 
-            HorizontalAlignment="Center"
-            DataContext="{Binding Parent.SelectedGame}">
-    
-    <TextBlock Text="{Binding Title}" 
-               FontSize="32" 
-               FontWeight="ExtraBold"
-               Foreground="White"
-               TextAlignment="Center"/>
-    
-    <TextBlock Text="{Binding PlayTime, StringFormat='{}{0} HOURS PLAYED'}" 
-               FontSize="14" 
-               FontWeight="SemiBold"
-               Foreground="#99ffffff"
-               TextAlignment="Center"
-               LetterSpacing="2"/>
-</StackPanel>
-    </Grid>
+        <StackPanel VerticalAlignment="Center" 
+                    HorizontalAlignment="Center"
+                    Margin="0,450,0,0"
+                    Spacing="5" 
+                    IsHitTestVisible="False"
+                    DataContext="{Binding Parent.SelectedGame}">
+            
+            <TextBlock Text="{Binding Title}" 
+                       FontSize="32" 
+                       FontWeight="ExtraBold"
+                       Foreground="White"
+                       TextAlignment="Center"/>
+            
+            <TextBlock Text="{Binding PlayTime, StringFormat='{}{0} HOURS PLAYED'}" 
+                       FontSize="14" 
+                       FontWeight="SemiBold"
+                       Foreground="#99ffffff"
+                       TextAlignment="Center"
+                       LetterSpacing="2"/>
+        </StackPanel>
+    </Panel>
 </UserControl>
