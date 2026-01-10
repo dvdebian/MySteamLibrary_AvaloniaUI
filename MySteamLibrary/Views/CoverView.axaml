@@ -20,7 +20,7 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Margin" Value="40,0"/> 
-            <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
+            <Setter Property="RenderTransformOrigin" Value="50%,100%"/>
             <Setter Property="Transitions">
                 <Transitions>
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
@@ -39,101 +39,101 @@
     </UserControl.Styles>
 
     <Panel>
-        <ListBox x:Name="CoverList"
-                 ItemsSource="{Binding Games}"
-                 SelectedItem="{Binding Parent.SelectedGame}"
-                 Background="Transparent"
-                 PointerWheelChanged="OnPointerWheelChanged"
-                 Focusable="True"
-                 Margin="0,0,0,100"
-                 ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-                 ScrollViewer.VerticalScrollBarVisibility="Disabled">
+        <StackPanel VerticalAlignment="Center" Spacing="30">
             
-            <ListBox.Template>
-                <ControlTemplate>
-                    <Border Background="{TemplateBinding Background}">
-                        <ScrollViewer Name="PART_ScrollViewer"
-                                      HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
-                                      VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
-                            <ScrollViewer.Transitions>
-                                <Transitions>
-                                    <VectorTransition Property="Offset" Duration="0:0:0.25" Easing="CubicEaseOut"/>
-                                </Transitions>
-                            </ScrollViewer.Transitions>
+            <ListBox x:Name="CoverList"
+                     ItemsSource="{Binding Games}"
+                     SelectedItem="{Binding Parent.SelectedGame}"
+                     Background="Transparent"
+                     PointerWheelChanged="OnPointerWheelChanged"
+                     Focusable="True"
+                     ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                
+                <ListBox.Template>
+                    <ControlTemplate>
+                        <Border Background="{TemplateBinding Background}">
+                            <ScrollViewer Name="PART_ScrollViewer"
+                                          HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                                          VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
+                                <ScrollViewer.Transitions>
+                                    <Transitions>
+                                        <VectorTransition Property="Offset" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                                    </Transitions>
+                                </ScrollViewer.Transitions>
 
-                            <Border Padding="{Binding Bounds.Width, 
-                                             RelativeSource={RelativeSource TemplatedParent}, 
-                                             Converter={StaticResource CenterPaddingConverter}}">
-                                <ItemsPresenter Name="PART_ItemsPresenter"
-                                                ItemsPanel="{TemplateBinding ItemsPanel}" />
-                            </Border>
-                        </ScrollViewer>
-                    </Border>
-                </ControlTemplate>
-            </ListBox.Template>
-
-            <ListBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <VirtualizingStackPanel Orientation="Horizontal" VerticalAlignment="Center"/>
-                </ItemsPanelTemplate>
-            </ListBox.ItemsPanel>
-
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="models:GameModel">
-                    <LayoutTransformControl>
-                        <LayoutTransformControl.LayoutTransform>
-                            <ScaleTransform>
-                                <ScaleTransform.ScaleX>
-                                    <MultiBinding Converter="{StaticResource DynamicScaleConverter}">
-                                        <Binding Path="Bounds.Width" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                        <Binding Path="IsSelected" RelativeSource="{RelativeSource AncestorType=ListBoxItem}"/>
-                                    </MultiBinding>
-                                </ScaleTransform.ScaleX>
-                                <ScaleTransform.ScaleY>
-                                    <MultiBinding Converter="{StaticResource DynamicScaleConverter}">
-                                        <Binding Path="Bounds.Width" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                        <Binding Path="IsSelected" RelativeSource="{RelativeSource AncestorType=ListBoxItem}"/>
-                                    </MultiBinding>
-                                </ScaleTransform.ScaleY>
-                            </ScaleTransform>
-                        </LayoutTransformControl.LayoutTransform>
-
-                        <Border Width="220" Height="330" 
-                                Background="#2a2e33" 
-                                VerticalAlignment="Bottom"
-                                CornerRadius="6" 
-                                ClipToBounds="True"
-                                PointerPressed="OnCoverClicked"
-                                BoxShadow="0 10 20 0 #66000000">
-                            <Panel>
-                                <Image Source="{Binding ImagePath, Converter={StaticResource VariableImageConverter}}" 
-                                       Stretch="UniformToFill"/>
-                            </Panel>
+                                <Border Padding="{Binding Bounds.Width, 
+                                                 RelativeSource={RelativeSource TemplatedParent}, 
+                                                 Converter={StaticResource CenterPaddingConverter}}">
+                                    <ItemsPresenter Name="PART_ItemsPresenter"
+                                                    ItemsPanel="{TemplateBinding ItemsPanel}" />
+                                </Border>
+                            </ScrollViewer>
                         </Border>
-                    </LayoutTransformControl>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+                    </ControlTemplate>
+                </ListBox.Template>
 
-        <StackPanel VerticalAlignment="Center" 
-                    HorizontalAlignment="Center"
-                    Margin="0,475,0,0"
-                    Spacing="5" 
-                    IsHitTestVisible="False"
-                    DataContext="{Binding Parent.SelectedGame}">
-            
-            <TextBlock Text="{Binding Title}" 
-                       FontSize="32" 
-                       FontWeight="ExtraBold"
-                       Foreground="White"
-                       TextAlignment="Center"/>
-            
-            <TextBlock Text="{Binding PlayTime, StringFormat='{}{0} HOURS PLAYED'}" 
-                       FontSize="14" 
-                       FontWeight="SemiBold"
-                       Foreground="#99ffffff"
-                       TextAlignment="Center"
-                       LetterSpacing="2"/>
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel Orientation="Horizontal" VerticalAlignment="Bottom"/>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:GameModel">
+                        <LayoutTransformControl>
+                            <LayoutTransformControl.LayoutTransform>
+                                <ScaleTransform>
+                                    <ScaleTransform.ScaleX>
+                                        <MultiBinding Converter="{StaticResource DynamicScaleConverter}">
+                                            <Binding Path="Bounds.Width" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                            <Binding Path="IsSelected" RelativeSource="{RelativeSource AncestorType=ListBoxItem}"/>
+                                        </MultiBinding>
+                                    </ScaleTransform.ScaleX>
+                                    <ScaleTransform.ScaleY>
+                                        <MultiBinding Converter="{StaticResource DynamicScaleConverter}">
+                                            <Binding Path="Bounds.Width" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                            <Binding Path="IsSelected" RelativeSource="{RelativeSource AncestorType=ListBoxItem}"/>
+                                        </MultiBinding>
+                                    </ScaleTransform.ScaleY>
+                                </ScaleTransform>
+                            </LayoutTransformControl.LayoutTransform>
+
+                            <Border Width="220" Height="330" 
+                                    Background="#2a2e33" 
+                                    VerticalAlignment="Bottom"
+                                    CornerRadius="6" 
+                                    ClipToBounds="True"
+                                    PointerPressed="OnCoverClicked"
+                                    BoxShadow="0 10 20 0 #66000000">
+                                <Panel>
+                                    <Image Source="{Binding ImagePath, Converter={StaticResource VariableImageConverter}}" 
+                                           Stretch="UniformToFill"/>
+                                </Panel>
+                            </Border>
+                        </LayoutTransformControl>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <StackPanel HorizontalAlignment="Center"
+                        Spacing="5" 
+                        IsHitTestVisible="False"
+                        DataContext="{Binding Parent.SelectedGame}">
+                
+                <TextBlock Text="{Binding Title}" 
+                           FontSize="32" 
+                           FontWeight="ExtraBold"
+                           Foreground="White"
+                           TextAlignment="Center"/>
+                
+                <TextBlock Text="{Binding PlayTime, StringFormat='{}{0} HOURS PLAYED'}" 
+                           FontSize="14" 
+                           FontWeight="SemiBold"
+                           Foreground="#99ffffff"
+                           TextAlignment="Center"
+                           LetterSpacing="2"/>
+            </StackPanel>
         </StackPanel>
     </Panel>
 </UserControl>
