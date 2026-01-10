@@ -12,6 +12,7 @@
     <UserControl.Resources>
         <conv:BitmapValueConverter x:Key="VariableImageConverter"/>
         <conv:CenterPaddingConverter x:Key="CenterPaddingConverter"/>
+        <conv:DynamicScaleConverter x:Key="DynamicScaleConverter"/>
     </UserControl.Resources>
 
     <UserControl.Styles>
@@ -28,8 +29,8 @@
         </Style>
 
         <Style Selector="ListBoxItem:selected">
-            <Setter Property="RenderTransform" Value="scale(1.2)"/>
             <Setter Property="ZIndex" Value="10"/>
+            <Setter Property="RenderTransform" Value="scale(1.05)"/>
         </Style>
 
         <Style Selector="ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
@@ -79,24 +80,44 @@
 
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="models:GameModel">
-                    <Border Width="220" Height="330" 
-                            Background="#2a2e33" 
-                            CornerRadius="6" 
-                            ClipToBounds="True"
-                            PointerPressed="OnCoverClicked"
-                            BoxShadow="0 10 20 0 #66000000">
-                        <Panel>
-                            <Image Source="{Binding ImagePath, Converter={StaticResource VariableImageConverter}}" 
-                                   Stretch="UniformToFill"/>
-                        </Panel>
-                    </Border>
+                    <LayoutTransformControl>
+                        <LayoutTransformControl.LayoutTransform>
+                            <ScaleTransform>
+                                <ScaleTransform.ScaleX>
+                                    <MultiBinding Converter="{StaticResource DynamicScaleConverter}">
+                                        <Binding Path="Bounds.Width" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                        <Binding Path="IsSelected" RelativeSource="{RelativeSource AncestorType=ListBoxItem}"/>
+                                    </MultiBinding>
+                                </ScaleTransform.ScaleX>
+                                <ScaleTransform.ScaleY>
+                                    <MultiBinding Converter="{StaticResource DynamicScaleConverter}">
+                                        <Binding Path="Bounds.Width" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                        <Binding Path="IsSelected" RelativeSource="{RelativeSource AncestorType=ListBoxItem}"/>
+                                    </MultiBinding>
+                                </ScaleTransform.ScaleY>
+                            </ScaleTransform>
+                        </LayoutTransformControl.LayoutTransform>
+
+                        <Border Width="220" Height="330" 
+                                Background="#2a2e33" 
+                                VerticalAlignment="Bottom"
+                                CornerRadius="6" 
+                                ClipToBounds="True"
+                                PointerPressed="OnCoverClicked"
+                                BoxShadow="0 10 20 0 #66000000">
+                            <Panel>
+                                <Image Source="{Binding ImagePath, Converter={StaticResource VariableImageConverter}}" 
+                                       Stretch="UniformToFill"/>
+                            </Panel>
+                        </Border>
+                    </LayoutTransformControl>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
 
         <StackPanel VerticalAlignment="Center" 
                     HorizontalAlignment="Center"
-                    Margin="0,450,0,0"
+                    Margin="0,475,0,0"
                     Spacing="5" 
                     IsHitTestVisible="False"
                     DataContext="{Binding Parent.SelectedGame}">
