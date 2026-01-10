@@ -54,6 +54,12 @@
                     <ScrollViewer Name="PART_ScrollViewer"
                                   HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
                                   VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
+                        <ScrollViewer.Transitions>
+                            <Transitions>
+                                <VectorTransition Property="Offset" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                            </Transitions>
+                        </ScrollViewer.Transitions>
+
                         <Border Padding="{Binding Bounds.Width, 
                                          RelativeSource={RelativeSource TemplatedParent}, 
                                          Converter={StaticResource CenterPaddingConverter}}">
