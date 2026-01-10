@@ -1,4 +1,6 @@
-﻿using Avalonia.Data.Converters;
+﻿using Avalonia;
+using Avalonia.Data.Converters;
+using Avalonia.Media.Transformation; // Required for TransformOperations
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -9,35 +11,50 @@ namespace MySteamLibrary.Converters
     {
         public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
         {
-            // values[0] = Width (double)
-            // values[1] = IsSelected or IsRawValue (bool)
-            if (values.Count >= 2 && values[0] is double width && values[1] is bool isSelected)
+            // Safeguard: Check for UnsetValue to prevent crashes during initialization
+            if (values.Count < 2 || values[0] == AvaloniaProperty.UnsetValue || values[1] == AvaloniaProperty.UnsetValue)
             {
-                // Calculate the scale factor based on your formula
+                return GetDefaultReturn(parameter);
+            }
+
+            if (values[0] is double width && values[1] is bool isSelected)
+            {
+                // Dynamic scale calculation based on window width
                 double baseScale = 0.5;
                 double divisor = 2000;
                 double calculatedScale = baseScale + (width / divisor);
-
-                // Clamp the scale between 1.1 and 3.0 as per your requirements
                 double finalScale = width <= 0 ? 1.1 : Math.Clamp(calculatedScale, 1.1, 3.0);
 
-                // If the ListBox is asking for its total Height (using the ConverterParameter)
+                // Handle ListBox Height request
                 if (parameter?.ToString() == "GetHeight")
                 {
-                    // Base card height is 330.
-                    // We calculate the scaled height and add a 15% buffer for the selection zoom effect and shadows.
                     double baseHeight = 330;
                     double buffer = 1.15;
                     return baseHeight * finalScale * buffer;
                 }
 
-                // Standard behavior: If not selected, keep standard size (1.0)
-                if (!isSelected) return 1.0;
+                // Handle RenderTransform request
+                // We return a TransformOperations object instead of a string to avoid Cast Exceptions
+                if (!isSelected)
+                {
+                    return TransformOperations.Parse("scale(1.0)");
+                }
 
-                return finalScale;
+                string scaleString = string.Format(CultureInfo.InvariantCulture, "scale({0:F3})", finalScale);
+                return TransformOperations.Parse(scaleString);
             }
 
-            return 1.0;
+            return GetDefaultReturn(parameter);
+        }
+
+        private object GetDefaultReturn(object? parameter)
+        {
+            if (parameter?.ToString() == "GetHeight")
+            {
+                return 400.0;
+            }
+            // Ensure the default return matches the expected object type
+            return TransformOperations.Parse("scale(1.0)");
         }
     }
 }
