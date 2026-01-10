@@ -43,6 +43,7 @@
                  SelectedItem="{Binding Parent.SelectedGame}"
                  Background="Transparent"
                  PointerWheelChanged="OnPointerWheelChanged"
+                 Focusable="True"
                  Margin="0,0,0,100"
                  ScrollViewer.HorizontalScrollBarVisibility="Hidden"
                  ScrollViewer.VerticalScrollBarVisibility="Disabled">
@@ -82,6 +83,7 @@
                             Background="#2a2e33" 
                             CornerRadius="6" 
                             ClipToBounds="True"
+                            PointerPressed="OnCoverClicked"
                             BoxShadow="0 10 20 0 #66000000">
                         <Panel>
                             <Image Source="{Binding ImagePath, Converter={StaticResource VariableImageConverter}}" 
