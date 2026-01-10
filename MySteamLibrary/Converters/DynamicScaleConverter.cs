@@ -29,7 +29,7 @@ namespace MySteamLibrary.Converters
                 if (parameter?.ToString() == "GetHeight")
                 {
                     double baseHeight = 330;
-                    double buffer = 1.15;
+                    double buffer = 1.17;
                     return baseHeight * finalScale * buffer;
                 }
 

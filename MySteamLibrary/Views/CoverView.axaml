@@ -19,7 +19,7 @@
         <Style Selector="ListBoxItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="40,0"/> 
+            <Setter Property="Margin" Value="50,0"/> 
             <Setter Property="ClipToBounds" Value="False"/>
         </Style>
 
@@ -28,20 +28,38 @@
         </Style>
 
         <Style Selector="ListBoxItem Border#CardVisual">
+            <Setter Property="BoxShadow" Value="0 5 15 0 #88000000"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="2"/>
             <Setter Property="Transitions">
                 <Transitions>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Easing="CubicEaseOut"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.25"/>
                 </Transitions>
             </Setter>
+        </Style>
+
+        <Style Selector="ListBoxItem:selected Border#CardVisual">
+            <Setter Property="BoxShadow" Value="0 20 40 5 #AA000000"/>
+            <Setter Property="BorderBrush" Value="#44FFFFFF"/>
         </Style>
 
         <Style Selector="ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="ClipToBounds" Value="False" />
         </Style>
+        <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+
+        <Style Selector="ListBoxItem:pointerover">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
     </UserControl.Styles>
 
-    <Grid RowDefinitions="0.3*, Auto, 1*">
+    <Grid RowDefinitions="1*, Auto, 1*">
         <ListBox x:Name="CoverList"
                  Grid.Row="1"
                  ItemsSource="{Binding Games}"
@@ -81,6 +99,7 @@
                             <Border Padding="{Binding Bounds.Width, 
                                                RelativeSource={RelativeSource TemplatedParent}, 
                                                Converter={StaticResource CenterPaddingConverter}}"
+                                    Margin="0,0,0,60"
                                     VerticalAlignment="Bottom"
                                     ClipToBounds="False">
                                 <ItemsPresenter Name="PART_ItemsPresenter"
@@ -108,9 +127,8 @@
                                 Background="#2a2e33" 
                                 VerticalAlignment="Bottom"
                                 CornerRadius="12" 
-                                ClipToBounds="True"
-                                PointerPressed="OnCoverClicked"
-                                BoxShadow="0 10 20 0 #66000000">
+                                ClipToBounds="False" 
+                                PointerPressed="OnCoverClicked">
                             
                             <Border.RenderTransformOrigin>50%,100%</Border.RenderTransformOrigin>
                             
@@ -121,10 +139,12 @@
                                 </MultiBinding>
                             </Border.RenderTransform>
 
-                            <Panel>
-                                <Image Source="{Binding ImagePath, Converter={StaticResource VariableImageConverter}}" 
-                                       Stretch="UniformToFill"/>
-                            </Panel>
+                            <Border CornerRadius="12" ClipToBounds="True">
+                                <Panel>
+                                    <Image Source="{Binding ImagePath, Converter={StaticResource VariableImageConverter}}" 
+                                           Stretch="UniformToFill"/>
+                                </Panel>
+                            </Border>
                         </Border>
                     </Panel>
                 </DataTemplate>
@@ -133,7 +153,7 @@
 
         <StackPanel Grid.Row="2"
                     VerticalAlignment="Top"
-                    Margin="0,20,0,0"
+                    Margin="0,-40,0,0" 
                     HorizontalAlignment="Center"
                     Spacing="5" 
                     IsHitTestVisible="False"
