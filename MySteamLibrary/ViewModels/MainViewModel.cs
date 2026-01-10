@@ -11,7 +11,6 @@ using MySteamLibrary.ViewModels;
 
 namespace MySteamLibrary.ViewModels;
 
-// Future-proof sorting options
 public enum SortCriteria
 {
     Alphabetical,
@@ -21,11 +20,9 @@ public enum SortCriteria
 
 public partial class MainViewModel : ViewModelBase
 {
-    // Services for API data and local persistence
     private readonly SteamApiService _steamService = new();
     private readonly CacheService _cacheService = new();
 
-    // Fields to store the pre-created view models for navigation
     private readonly ListViewModel _listView;
     private readonly GridViewModel _gridView;
     private readonly CoverViewModel _coverView;
@@ -49,37 +46,40 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private string _searchText = string.Empty;
 
-    // Track the current sort mode (Default: Alphabetical)
     [ObservableProperty]
     private SortCriteria _currentSortMode = SortCriteria.Alphabetical;
 
     public SettingsViewModel Settings { get; } = new();
 
-    // The master collection that all sub-views bind to
+    // The collection used by all views for display
     private readonly ObservableCollection<GameModel> _allGames = new();
+
+    // The hidden master list that stores everything in memory for instant searching
+    private readonly List<GameModel> _masterLibrary = new();
 
     public MainViewModel()
     {
-        // Initialize sub-view models with the shared game collection
         _listView = new ListViewModel { Games = _allGames };
         _gridView = new GridViewModel { Games = _allGames };
         _coverView = new CoverViewModel { Games = _allGames };
         _carouselView = new CarouselViewModel { Games = _allGames };
 
-        // Default view on startup
         _activeView = _listView;
 
-        // Hook up settings close action
         Settings.RequestClose = () => IsSettingsOpen = false;
 
-        // Startup: Load only from cache. No automatic network fetch.
         _ = InitializeLibraryAsync();
     }
 
     /// <summary>
-    /// Initial load that only looks at the local cache.
-    /// Updated: Applies sorting after loading.
+    /// Triggered automatically by CommunityToolkit when SearchText changes.
+    /// This ensures live filtering as the user types.
     /// </summary>
+    partial void OnSearchTextChanged(string value)
+    {
+        ApplyFilteringAndSorting();
+    }
+
     private async Task InitializeLibraryAsync()
     {
         try
@@ -88,7 +88,12 @@ public partial class MainViewModel : ViewModelBase
 
             if (cachedGames != null && cachedGames.Any())
             {
-                UpdateGameCollection(cachedGames);
+                // Load into memory first
+                _masterLibrary.Clear();
+                _masterLibrary.AddRange(cachedGames);
+
+                // Show in UI
+                ApplyFilteringAndSorting();
             }
         }
         catch (Exception ex)
@@ -98,18 +103,25 @@ public partial class MainViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Centralized method to update the ObservableCollection and apply sorting.
+    /// Processes the master library through search and sort filters, then updates the UI collection.
+    /// Done entirely in memory for zero lag.
     /// </summary>
-    private void UpdateGameCollection(IEnumerable<GameModel> games)
+    private void ApplyFilteringAndSorting()
     {
-        // Apply the current sort criteria
+        // 1. Filter based on search text
+        var filtered = string.IsNullOrWhiteSpace(SearchText)
+            ? _masterLibrary
+            : _masterLibrary.Where(g => g.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+
+        // 2. Sort based on criteria
         var sorted = CurrentSortMode switch
         {
-            SortCriteria.PlayTime => games.OrderByDescending(g => g.PlaytimeMinutes),
-            SortCriteria.AppId => games.OrderBy(g => g.AppId),
-            _ => games.OrderBy(g => g.Title) // Alphabetical default
+            SortCriteria.PlayTime => filtered.OrderByDescending(g => g.PlaytimeMinutes),
+            SortCriteria.AppId => filtered.OrderBy(g => g.AppId),
+            _ => filtered.OrderBy(g => g.Title)
         };
 
+        // 3. Update the display collection
         _allGames.Clear();
         foreach (var game in sorted)
         {
@@ -117,10 +129,6 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Stage-based Refresh: 1. Skeleton UI, 2. Background Images, 3. Background Descriptions.
-    /// Updated: Applies sorting to the fresh list.
-    /// </summary>
     [RelayCommand]
     public async Task RefreshLibrary()
     {
@@ -129,19 +137,18 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             IsRefreshing = true;
-
-            // STAGE 1: Fast Skeleton Load (Titles and Playtime only)
             var freshGames = await _steamService.GetLibrarySkeletonAsync();
 
             if (freshGames != null && freshGames.Any())
             {
-                // Sort and display the fresh games immediately
-                UpdateGameCollection(freshGames);
+                // Update master memory
+                _masterLibrary.Clear();
+                _masterLibrary.AddRange(freshGames);
 
-                // Initial cache save with skeletons
-                await _cacheService.SaveLibraryCacheAsync(_allGames.ToList());
+                // Update UI
+                ApplyFilteringAndSorting();
 
-                // STAGE 2 & 3: Launch background updates without 'awaiting' them here
+                await _cacheService.SaveLibraryCacheAsync(_masterLibrary);
                 _ = Task.Run(() => BackgroundUpdateDataAsync());
             }
         }
@@ -155,22 +162,14 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Background worker to fill in images and descriptions piece-by-piece.
-    /// </summary>
     private async Task BackgroundUpdateDataAsync()
     {
-        var gameList = _allGames.ToList();
-
-        // 1. STAGE 2: Parallel Image Download
-        var imageTasks = gameList.Select(game => _steamService.LoadGameImageAsync(game));
+        // Update images and descriptions directly on the master objects
+        var imageTasks = _masterLibrary.Select(game => _steamService.LoadGameImageAsync(game));
         await Task.WhenAll(imageTasks);
 
-        // Save cache once images are linked
-        await _cacheService.SaveLibraryCacheAsync(_allGames.ToList());
-
-        // 2. STAGE 3: Sequential Description Fetch (Rate-limited)
-        await _steamService.RefreshDescriptionsAsync(_allGames);
+        await _cacheService.SaveLibraryCacheAsync(_masterLibrary);
+        await _steamService.RefreshDescriptionsAsync(_masterLibrary);
     }
 
     [RelayCommand]
@@ -186,16 +185,12 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void ToggleSettings()
-    {
-        IsSettingsOpen = !IsSettingsOpen;
-    }
+    public void ToggleSettings() => IsSettingsOpen = !IsSettingsOpen;
 
     [RelayCommand]
     public void OpenGameDetails(GameModel game)
     {
-        var detailsVm = new GameDetailsViewModel(game);
-        detailsVm.RequestClose = () => IsGameDetailsOpen = false;
+        var detailsVm = new GameDetailsViewModel(game) { RequestClose = () => IsGameDetailsOpen = false };
         CurrentDetails = detailsVm;
         IsGameDetailsOpen = true;
     }
@@ -207,13 +202,10 @@ public partial class MainViewModel : ViewModelBase
         CurrentDetails = null;
     }
 
-    /// <summary>
-    /// Future use: Allows changing the sort mode and refreshing the UI.
-    /// </summary>
     [RelayCommand]
     public void ChangeSortMode(SortCriteria newCriteria)
     {
         CurrentSortMode = newCriteria;
-        UpdateGameCollection(_allGames.ToList());
+        ApplyFilteringAndSorting();
     }
 }
