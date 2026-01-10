@@ -159,6 +159,21 @@ public partial class MainViewModel : ViewModelBase
         {
             _allGames.Add(game);
         }
+        // NEW STEP 4: Auto-Selection for Centered Views
+        // If we are in a mode that relies on centering, we MUST ensure the first
+        // game is selected after a filter, otherwise the carousel stays empty or off-center.
+        if (ActiveView == _coverView || ActiveView == _carouselView)
+        {
+            if (_allGames.Count > 0)
+            {
+                // Forces the carousel to snap to the first result of the search
+                SelectedGame = _allGames[0];
+            }
+            else
+            {
+                SelectedGame = null;
+            }
+        }
     }
 
     /// <summary>
