@@ -10,21 +10,31 @@ namespace MySteamLibrary.Converters
         public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
         {
             // values[0] = Width (double)
-            // values[1] = IsSelected (bool)
+            // values[1] = IsSelected or IsRawValue (bool)
             if (values.Count >= 2 && values[0] is double width && values[1] is bool isSelected)
             {
-                // If not selected, keep standard size (1.0)
+                // Calculate the scale factor based on your formula
+                double baseScale = 0.5;
+                double divisor = 2000;
+                double calculatedScale = baseScale + (width / divisor);
+
+                // Clamp the scale between 1.1 and 3.0 as per your requirements
+                double finalScale = width <= 0 ? 1.1 : Math.Clamp(calculatedScale, 1.1, 3.0);
+
+                // If the ListBox is asking for its total Height (using the ConverterParameter)
+                if (parameter?.ToString() == "GetHeight")
+                {
+                    // Base card height is 330.
+                    // We calculate the scaled height and add a 15% buffer for the selection zoom effect and shadows.
+                    double baseHeight = 330;
+                    double buffer = 1.15;
+                    return baseHeight * finalScale * buffer;
+                }
+
+                // Standard behavior: If not selected, keep standard size (1.0)
                 if (!isSelected) return 1.0;
 
-                if (width <= 0) return 1.1;
-
-                // 1. Lowered the base from 0.8 to 0.5 for a smaller default zoom.
-                // 2. Kept the divisor at 2000 to maintain steady growth.
-                // Formula: 0.5 + (1920 / 2000) = ~1.46x zoom at 1080p.
-                double scaleFactor = 0.5 + (width / 2000);
-
-                // Ensure it never goes below 1.1 and never above 3.0
-                return Math.Clamp(scaleFactor, 1.1, 3.0);
+                return finalScale;
             }
 
             return 1.0;
