@@ -4,61 +4,169 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:MySteamLibrary.ViewModels"
              xmlns:models="using:MySteamLibrary.Models"
-             xmlns:views="using:MySteamLibrary.Views"
-             xmlns:controls="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.ItemsRepeater"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:conv="using:MySteamLibrary.Converters"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="MySteamLibrary.Views.CarouselView"
-             x:DataType="vm:CarouselViewModel">
+             x:DataType="vm:CoverViewModel">
 
-    <Grid RowDefinitions="*, Auto">
-        <ScrollViewer x:Name="CarouselScroll"
-                      Grid.Row="0" 
-                      HorizontalScrollBarVisibility="Hidden" 
-                      VerticalScrollBarVisibility="Disabled"
-                      PointerWheelChanged="OnPointerWheelChanged">
-            
-            <controls:ItemsRepeater ItemsSource="{Binding Games}" 
-                                    Margin="50,0"
-                                    VerticalAlignment="Center">
-                <controls:ItemsRepeater.Layout>
-                    <StackLayout Orientation="Horizontal" 
-                                 Spacing="-40" />
-                </controls:ItemsRepeater.Layout>
+    <UserControl.Resources>
+        <conv:BitmapValueConverter x:Key="VariableImageConverter"/>
+        <conv:CenterPaddingConverter x:Key="CenterPaddingConverter"/>
+        <conv:CarouselTransformConverter x:Key="CarouselTransformConverter"/>
+    </UserControl.Resources>
 
-                <controls:ItemsRepeater.ItemTemplate>
-                    <DataTemplate x:DataType="models:GameModel">
-                        <Button Background="Transparent"
-                                BorderThickness="0"
-                                Padding="0"
-                                Command="{Binding $parent[views:MainView].((vm:MainViewModel)DataContext).OpenGameDetailsCommand}"
-                                CommandParameter="{Binding}"
-                                ClipToBounds="False">
+    <UserControl.Styles>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="5,0"/> 
+            <Setter Property="ClipToBounds" Value="False"/>
+            <Setter Property="ZIndex" Value="1"/> 
+        </Style>
+
+        <Style Selector="ListBoxItem:selected">
+            <Setter Property="ZIndex" Value="100"/>
+        </Style>
+
+        <Style Selector="ListBoxItem Border#CardVisual">
+            <Setter Property="BoxShadow" Value="0 5 15 0 #88000000"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Opacity" Value="0.6"/> <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.4" Easing="CircularEaseOut"/>
+                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.25"/>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.3"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="ListBoxItem:selected Border#CardVisual">
+            <Setter Property="BoxShadow" Value="0 20 40 5 #AA000000"/>
+            <Setter Property="BorderBrush" Value="#44FFFFFF"/>
+            <Setter Property="Opacity" Value="1.0"/> </Style>
+
+        <Style Selector="ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="ClipToBounds" Value="False" />
+        </Style>
+        
+        <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="1*, Auto, 1*">
+        <ListBox x:Name="CarouselList"
+                 Grid.Row="1"
+                 ItemsSource="{Binding Games}"
+                 SelectedItem="{Binding Parent.SelectedGame}"
+                 Background="Transparent"
+                 PointerWheelChanged="OnPointerWheelChanged"
+                 Focusable="True"
+                 ClipToBounds="False"
+                 VerticalAlignment="Bottom"
+                 ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+                 ScrollViewer.VerticalScrollBarVisibility="Disabled">
+
+            <ListBox.Height>
+                <MultiBinding Converter="{StaticResource CarouselTransformConverter}" ConverterParameter="GetHeight">
+                    <Binding Path="Bounds" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                    <Binding Path="SelectedItem" ElementName="CarouselList"/>
+                    <Binding Path="ItemsSource" ElementName="CarouselList"/>
+                </MultiBinding>
+            </ListBox.Height>
+
+            <ListBox.Template>
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}" ClipToBounds="False">
+                        <ScrollViewer Name="PART_ScrollViewer"
+                                      ClipToBounds="False"
+                                      HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                                      VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
                             
-                            <Border Width="200" 
-                                    Height="300" 
-                                    Background="#2a2e33" 
-                                    CornerRadius="8"
-                                    BoxShadow="0 10 20 0 Black">
-                                <Panel>
-                                    <TextBlock Text="{Binding Title}" 
-                                               VerticalAlignment="Center" 
-                                               HorizontalAlignment="Center"
-                                               TextAlignment="Center"
-                                               Padding="10"
-                                               TextWrapping="Wrap"/>
-                                </Panel>
-                            </Border>
-                        </Button>
-                    </DataTemplate>
-                </controls:ItemsRepeater.ItemTemplate>
-            </controls:ItemsRepeater>
-        </ScrollViewer>
+                            <ScrollViewer.Transitions>
+                                <Transitions>
+                                    <VectorTransition Property="Offset" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+                                </Transitions>
+                            </ScrollViewer.Transitions>
 
-        <StackPanel Grid.Row="1" Margin="0,0,0,40" HorizontalAlignment="Center">
-            <TextBlock Text="GAME TITLE" 
-                       FontSize="22" 
-                       FontWeight="Bold" 
-                       HorizontalAlignment="Center"/>
+                            <Border Padding="{Binding Bounds.Width, 
+                                               RelativeSource={RelativeSource TemplatedParent}, 
+                                               Converter={StaticResource CenterPaddingConverter}}"
+                                    Margin="0,0,0,60"
+                                    VerticalAlignment="Bottom"
+                                    ClipToBounds="False">
+                                <ItemsPresenter Name="PART_ItemsPresenter"
+                                                ItemsPanel="{TemplateBinding ItemsPanel}" 
+                                                ClipToBounds="False"/>
+                            </Border>
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </ListBox.Template>
+
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel Orientation="Horizontal" 
+                                            VerticalAlignment="Bottom"
+                                            ClipToBounds="False"/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="models:GameModel">
+                    <Panel Width="220" Height="330" VerticalAlignment="Bottom" ClipToBounds="False">
+                        <Border Name="CardVisual"
+                                Width="220" Height="330" 
+                                Background="#2a2e33" 
+                                VerticalAlignment="Bottom"
+                                CornerRadius="12" 
+                                ClipToBounds="False" 
+                                PointerPressed="OnCoverClicked">
+                            
+                            <Border.RenderTransformOrigin>50%,50%</Border.RenderTransformOrigin>
+                            
+                            <Border.RenderTransform>
+                                <MultiBinding Converter="{StaticResource CarouselTransformConverter}">
+                                    <Binding /> 
+                                    <Binding Path="SelectedItem" ElementName="CarouselList"/>
+                                    <Binding Path="ItemsSource" ElementName="CarouselList"/>
+                                    <Binding Path="Bounds" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                </MultiBinding>
+                            </Border.RenderTransform>
+
+                            <Border CornerRadius="12" ClipToBounds="True">
+                                <Image Source="{Binding ImagePath, Converter={StaticResource VariableImageConverter}}" 
+                                       Stretch="UniformToFill"/>
+                            </Border>
+                        </Border>
+                    </Panel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Grid.Row="2"
+                    VerticalAlignment="Top"
+                    Margin="0,-40,0,0" 
+                    HorizontalAlignment="Center"
+                    Spacing="5" 
+                    IsHitTestVisible="False"
+                    DataContext="{Binding Parent.SelectedGame}">
+            
+            <TextBlock Text="{Binding Title}" 
+                       FontSize="32" 
+                       FontWeight="ExtraBold"
+                       Foreground="White"
+                       TextAlignment="Center"/>
+            
+            <TextBlock Text="{Binding PlayTime, StringFormat='{}{0} HOURS PLAYED'}" 
+                       FontSize="14" 
+                       FontWeight="SemiBold"
+                       Foreground="#99ffffff"
+                       TextAlignment="Center"
+                       LetterSpacing="2"/>
         </StackPanel>
     </Grid>
 </UserControl>
