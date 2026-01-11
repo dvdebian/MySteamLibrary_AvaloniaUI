@@ -19,12 +19,6 @@
     </UserControl.Resources>
 
     <UserControl.Styles>
-        <!-- Styles for ItemsRepeater items (similar to ListBoxItem) -->
-        <Style Selector="Border.CarouselCard">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="ClipToBounds" Value="False"/>
-        </Style>
-
         <Style Selector="Border.CarouselCard Border#CardVisual">
             <Setter Property="BoxShadow" Value="0 5 15 0 #88000000"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
@@ -44,11 +38,10 @@
             <Setter Property="BoxShadow" Value="0 20 40 5 #AA000000"/>
             <Setter Property="BorderBrush" Value="#44FFFFFF"/>
             <Setter Property="Opacity" Value="1.0"/>
-            <Setter Property="ZIndex" Value="100"/>
         </Style>
     </UserControl.Styles>
 
-    <Grid RowDefinitions="*, Auto, Auto">
+    <Grid x:Name="MainGrid" RowDefinitions="30, Auto, Auto">
         <ScrollViewer x:Name="CarouselScroller"
                       Grid.Row="1"
                       Background="Transparent"
@@ -58,7 +51,7 @@
                       Focusable="True"
                       ClipToBounds="False"
                       VerticalAlignment="Bottom"
-                      Margin="0,0,0,0">
+                      Margin="0">
 
             <ScrollViewer.Height>
                 <MultiBinding Converter="{StaticResource CarouselTransformConverter}" ConverterParameter="GetHeight">
@@ -147,7 +140,7 @@
 
         <StackPanel Grid.Row="2"
                     VerticalAlignment="Top"
-                    Margin="0,-20,0,30" 
+                    Margin="0,0,0,30" 
                     HorizontalAlignment="Center"
                     Spacing="5" 
                     IsHitTestVisible="False"

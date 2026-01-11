@@ -40,7 +40,7 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
     {
         InitializeComponent();
 
-        // Watch for DataContext changes
+        // Watch for selection changes from ViewModel
         DataContextChanged += OnDataContextChanged;
 
         // Listen for keyboard support
@@ -183,8 +183,25 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
     {
         base.OnSizeChanged(e);
 
+        // Get the MainGrid and update row height dynamically
+        if (this.FindControl<Grid>("MainGrid") is Grid mainGrid && mainGrid.RowDefinitions.Count > 0)
+        {
+            // Calculate dynamic row height based on window height
+            double height = e.NewSize.Height;
+            double minHeight = 500;    // Start scaling from 500px instead of 600px
+            double maxHeight = 1080;
+            double minRowHeight = 0;   // No space for small windows (games as high as possible)
+            double maxRowHeight = 180; // Large space for large windows (games lower)
+
+            double clampedHeight = Math.Clamp(height, minHeight, maxHeight);
+            double ratio = (clampedHeight - minHeight) / (maxHeight - minHeight);
+            double rowHeight = minRowHeight + (ratio * (maxRowHeight - minRowHeight));
+
+            // Update the first row height
+            mainGrid.RowDefinitions[0] = new RowDefinition(rowHeight, GridUnitType.Pixel);
+        }
+
         // Force immediate recalculation by temporarily resetting offset
-        var currentOffset = CarouselScroller.Offset;
         CarouselScroller.Offset = new Vector(0, 0);
 
         // Then recalculate and apply the correct offset
