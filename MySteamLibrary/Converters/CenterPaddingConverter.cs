@@ -12,7 +12,7 @@ public class CenterPaddingConverter : IValueConverter
         if (value is double width && width > 0)
         {
             double centerOfScreen = width / 2;
-            double halfItem = 150;
+            double halfItem = 110; // Half of 220px item width
 
             double padding = centerOfScreen - halfItem;
 

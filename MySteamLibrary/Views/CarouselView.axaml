@@ -5,34 +5,32 @@
              xmlns:vm="using:MySteamLibrary.ViewModels"
              xmlns:models="using:MySteamLibrary.Models"
              xmlns:conv="using:MySteamLibrary.Converters"
+             xmlns:views="using:MySteamLibrary.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="MySteamLibrary.Views.CarouselView"
-             x:DataType="vm:CoverViewModel">
+             x:DataType="vm:CarouselViewModel">
 
     <UserControl.Resources>
         <conv:BitmapValueConverter x:Key="VariableImageConverter"/>
         <conv:CenterPaddingConverter x:Key="CenterPaddingConverter"/>
         <conv:CarouselTransformConverter x:Key="CarouselTransformConverter"/>
+        <conv:SelectedZIndexConverter x:Key="SelectedZIndexConverter"/>
+        <conv:DynamicItemMarginConverter x:Key="DynamicItemMarginConverter"/>
     </UserControl.Resources>
 
     <UserControl.Styles>
-        <Style Selector="ListBoxItem">
+        <!-- Styles for ItemsRepeater items (similar to ListBoxItem) -->
+        <Style Selector="Border.CarouselCard">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="5,0"/> 
             <Setter Property="ClipToBounds" Value="False"/>
-            <Setter Property="ZIndex" Value="1"/> 
         </Style>
 
-        <Style Selector="ListBoxItem:selected">
-            <Setter Property="ZIndex" Value="100"/>
-        </Style>
-
-        <Style Selector="ListBoxItem Border#CardVisual">
+        <Style Selector="Border.CarouselCard Border#CardVisual">
             <Setter Property="BoxShadow" Value="0 5 15 0 #88000000"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="Opacity" Value="0.6"/> <Setter Property="Transitions">
+            <Setter Property="Opacity" Value="0.6"/>
+            <Setter Property="Transitions">
                 <Transitions>
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.4" Easing="CircularEaseOut"/>
                     <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.25" Easing="CubicEaseOut"/>
@@ -42,118 +40,118 @@
             </Setter>
         </Style>
 
-        <Style Selector="ListBoxItem:selected Border#CardVisual">
+        <Style Selector="Border.CarouselCard.Selected Border#CardVisual">
             <Setter Property="BoxShadow" Value="0 20 40 5 #AA000000"/>
             <Setter Property="BorderBrush" Value="#44FFFFFF"/>
-            <Setter Property="Opacity" Value="1.0"/> </Style>
-
-        <Style Selector="ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="ClipToBounds" Value="False" />
-        </Style>
-        
-        <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Opacity" Value="1.0"/>
+            <Setter Property="ZIndex" Value="100"/>
         </Style>
     </UserControl.Styles>
 
-    <Grid RowDefinitions="1*, Auto, 1*">
-        <ListBox x:Name="CarouselList"
-                 Grid.Row="1"
-                 ItemsSource="{Binding Games}"
-                 SelectedItem="{Binding Parent.SelectedGame}"
-                 Background="Transparent"
-                 PointerWheelChanged="OnPointerWheelChanged"
-                 Focusable="True"
-                 ClipToBounds="False"
-                 VerticalAlignment="Bottom"
-                 ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-                 ScrollViewer.VerticalScrollBarVisibility="Disabled">
+    <Grid RowDefinitions="*, Auto, Auto">
+        <ScrollViewer x:Name="CarouselScroller"
+                      Grid.Row="1"
+                      Background="Transparent"
+                      HorizontalScrollBarVisibility="Hidden"
+                      VerticalScrollBarVisibility="Disabled"
+                      PointerWheelChanged="OnPointerWheelChanged"
+                      Focusable="True"
+                      ClipToBounds="False"
+                      VerticalAlignment="Bottom"
+                      Margin="0,0,0,0">
 
-            <ListBox.Height>
+            <ScrollViewer.Height>
                 <MultiBinding Converter="{StaticResource CarouselTransformConverter}" ConverterParameter="GetHeight">
                     <Binding Path="Bounds" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                    <Binding Path="SelectedItem" ElementName="CarouselList"/>
-                    <Binding Path="ItemsSource" ElementName="CarouselList"/>
+                    <Binding Path="Parent.SelectedGame" />
+                    <Binding Path="Games"/>
                 </MultiBinding>
-            </ListBox.Height>
+            </ScrollViewer.Height>
 
-            <ListBox.Template>
-                <ControlTemplate>
-                    <Border Background="{TemplateBinding Background}" ClipToBounds="False">
-                        <ScrollViewer Name="PART_ScrollViewer"
-                                      ClipToBounds="False"
-                                      HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
-                                      VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
-                            
-                            <ScrollViewer.Transitions>
-                                <Transitions>
-                                    <VectorTransition Property="Offset" Duration="0:0:0.4" Easing="CubicEaseOut"/>
-                                </Transitions>
-                            </ScrollViewer.Transitions>
+            <ScrollViewer.Transitions>
+                <Transitions>
+                    <VectorTransition Property="Offset" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+                </Transitions>
+            </ScrollViewer.Transitions>
 
-                            <Border Padding="{Binding Bounds.Width, 
-                                               RelativeSource={RelativeSource TemplatedParent}, 
-                                               Converter={StaticResource CenterPaddingConverter}}"
-                                    Margin="0,0,0,60"
-                                    VerticalAlignment="Bottom"
+            <Border Padding="{Binding Bounds.Width, 
+                               RelativeSource={RelativeSource AncestorType=UserControl}, 
+                               Converter={StaticResource CenterPaddingConverter}}"
+                    Margin="0"
+                    VerticalAlignment="Center"
+                    ClipToBounds="False">
+
+                <ItemsRepeater x:Name="CarouselRepeater"
+                               ItemsSource="{Binding Games}"
+                               ClipToBounds="False"
+                               VerticalAlignment="Center">
+
+                    <ItemsRepeater.Layout>
+                        <StackLayout Orientation="Horizontal" 
+                                     Spacing="10"/>
+                    </ItemsRepeater.Layout>
+
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate x:DataType="models:GameModel">
+                            <Border Width="220" 
+                                    Height="330"
+                                    Margin="{Binding Bounds.Width, RelativeSource={RelativeSource AncestorType=views:CarouselView}, Converter={StaticResource DynamicItemMarginConverter}}"
+                                    VerticalAlignment="Bottom" 
                                     ClipToBounds="False">
-                                <ItemsPresenter Name="PART_ItemsPresenter"
-                                                ItemsPanel="{TemplateBinding ItemsPanel}" 
-                                                ClipToBounds="False"/>
+                                    
+                                <Border.ZIndex>
+                                    <MultiBinding Converter="{StaticResource SelectedZIndexConverter}">
+                                        <Binding />
+                                        <Binding Path="CurrentSelectedGame" RelativeSource="{RelativeSource AncestorType=views:CarouselView}"/>
+                                    </MultiBinding>
+                                </Border.ZIndex>
+
+                                <Panel Width="220" Height="330" VerticalAlignment="Center" ClipToBounds="False">
+                                    <Border Name="CardVisual"
+                                            Width="220" Height="330" 
+                                            Background="#2a2e33" 
+                                            VerticalAlignment="Center"
+                                            CornerRadius="12" 
+                                            ClipToBounds="False" 
+                                            PointerPressed="OnCoverClicked">
+                                        
+                                        <Border.RenderTransformOrigin>50%,50%</Border.RenderTransformOrigin>
+                                        
+                                        <Border.RenderTransform>
+                                            <MultiBinding Converter="{StaticResource CarouselTransformConverter}">
+                                                <Binding /> 
+                                                <Binding Path="CurrentSelectedGame" RelativeSource="{RelativeSource AncestorType=views:CarouselView}"/>
+                                                <Binding Path="ItemsSource" ElementName="CarouselRepeater"/>
+                                                <Binding Path="Bounds" RelativeSource="{RelativeSource AncestorType=views:CarouselView}"/>
+                                            </MultiBinding>
+                                        </Border.RenderTransform>
+                                        
+                                        <Border.Transitions>
+                                            <Transitions>
+                                                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+                                            </Transitions>
+                                        </Border.Transitions>
+
+                                        <Border CornerRadius="12" ClipToBounds="True">
+                                            <Image Source="{Binding ImagePath, Converter={StaticResource VariableImageConverter}}" 
+                                                   Stretch="UniformToFill"/>
+                                        </Border>
+                                    </Border>
+                                </Panel>
                             </Border>
-                        </ScrollViewer>
-                    </Border>
-                </ControlTemplate>
-            </ListBox.Template>
-
-            <ListBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <VirtualizingStackPanel Orientation="Horizontal" 
-                                            VerticalAlignment="Bottom"
-                                            ClipToBounds="False"/>
-                </ItemsPanelTemplate>
-            </ListBox.ItemsPanel>
-
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="models:GameModel">
-                    <Panel Width="220" Height="330" VerticalAlignment="Bottom" ClipToBounds="False">
-                        <Border Name="CardVisual"
-                                Width="220" Height="330" 
-                                Background="#2a2e33" 
-                                VerticalAlignment="Bottom"
-                                CornerRadius="12" 
-                                ClipToBounds="False" 
-                                PointerPressed="OnCoverClicked">
-                            
-                            <Border.RenderTransformOrigin>50%,50%</Border.RenderTransformOrigin>
-                            
-                            <Border.RenderTransform>
-                                <MultiBinding Converter="{StaticResource CarouselTransformConverter}">
-                                    <Binding /> 
-                                    <Binding Path="SelectedItem" ElementName="CarouselList"/>
-                                    <Binding Path="ItemsSource" ElementName="CarouselList"/>
-                                    <Binding Path="Bounds" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                </MultiBinding>
-                            </Border.RenderTransform>
-
-                            <Border CornerRadius="12" ClipToBounds="True">
-                                <Image Source="{Binding ImagePath, Converter={StaticResource VariableImageConverter}}" 
-                                       Stretch="UniformToFill"/>
-                            </Border>
-                        </Border>
-                    </Panel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+            </Border>
+        </ScrollViewer>
 
         <StackPanel Grid.Row="2"
                     VerticalAlignment="Top"
-                    Margin="0,-40,0,0" 
+                    Margin="0,-20,0,30" 
                     HorizontalAlignment="Center"
                     Spacing="5" 
                     IsHitTestVisible="False"
-                    DataContext="{Binding Parent.SelectedGame}">
+                    DataContext="{Binding CurrentSelectedGame, RelativeSource={RelativeSource AncestorType=views:CarouselView}}">
             
             <TextBlock Text="{Binding Title}" 
                        FontSize="32" 

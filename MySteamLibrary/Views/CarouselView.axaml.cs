@@ -2,37 +2,102 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using MySteamLibrary.ViewModels;
 using MySteamLibrary.Models;
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 
 namespace MySteamLibrary.Views;
 
 /// <summary>
-/// Code-behind for CarouselView. 
+/// Code-behind for CarouselView with ItemsRepeater. 
 /// Handles magnetic centering and window resize recalculation.
 /// </summary>
-public partial class CarouselView : UserControl
+public partial class CarouselView : UserControl, INotifyPropertyChanged
 {
+    private int _selectedIndex = 0;
+    private GameModel? _currentSelectedGame;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public GameModel? CurrentSelectedGame
+    {
+        get => _currentSelectedGame;
+        set
+        {
+            if (_currentSelectedGame != value)
+            {
+                _currentSelectedGame = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentSelectedGame)));
+            }
+        }
+    }
+
     public CarouselView()
     {
         InitializeComponent();
 
-        // Trigger centering whenever the selection changes
-        // Using CarouselList which is the name we gave it in the CarouselView.axaml
-        CarouselList.SelectionChanged += OnSelectionChanged;
+        // Watch for DataContext changes
+        DataContextChanged += OnDataContextChanged;
 
         // Listen for keyboard support
-        CarouselList.KeyDown += OnKeyDown;
+        CarouselScroller.KeyDown += OnKeyDown;
 
-        // Ensure we center on load and grab focus so Arrow Keys work immediately
+        // Ensure we center on load and grab focus
         AttachedToVisualTree += (s, e) =>
         {
             ScrollToSelected();
-
-            // Focus the list for Arrow keys to respond immediately on view load
-            Dispatcher.UIThread.Post(() => CarouselList.Focus(), DispatcherPriority.Background);
+            Dispatcher.UIThread.Post(() => CarouselScroller.Focus(), DispatcherPriority.Background);
         };
+    }
+
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        if (DataContext is CarouselViewModel vm)
+        {
+            // Subscribe to selection changes
+            vm.Parent.PropertyChanged += (s, args) =>
+            {
+                if (args.PropertyName == nameof(MainViewModel.SelectedGame))
+                {
+                    CurrentSelectedGame = vm.Parent.SelectedGame;
+                    UpdateSelectedIndex();
+                    ScrollToSelected();
+                }
+            };
+
+            // Initial setup - select first game if nothing is selected
+            if (vm.Parent.SelectedGame == null && vm.Games != null)
+            {
+                var firstGame = vm.Games.FirstOrDefault();
+                if (firstGame != null)
+                {
+                    vm.Parent.SelectedGame = firstGame;
+                }
+            }
+
+            CurrentSelectedGame = vm.Parent.SelectedGame;
+            UpdateSelectedIndex();
+
+            // Delay initial scroll to ensure layout is ready
+            Dispatcher.UIThread.Post(() => ScrollToSelected(), DispatcherPriority.Loaded);
+        }
+    }
+
+    private void UpdateSelectedIndex()
+    {
+        if (DataContext is CarouselViewModel vm && vm.Parent.SelectedGame != null)
+        {
+            var games = vm.Games?.ToList();
+            if (games != null)
+            {
+                _selectedIndex = games.IndexOf(vm.Parent.SelectedGame);
+                if (_selectedIndex < 0) _selectedIndex = 0;
+            }
+        }
     }
 
     /// <summary>
@@ -42,17 +107,29 @@ public partial class CarouselView : UserControl
     {
         if (sender is Control c && c.DataContext is GameModel clickedGame)
         {
-            // If already selected, open details
-            if (CarouselList.SelectedItem == clickedGame)
+            if (DataContext is CarouselViewModel viewModel)
             {
-                if (DataContext is CoverViewModel viewModel)
+                var games = viewModel.Games?.ToList();
+                if (games == null) return;
+
+                int clickedIndex = games.IndexOf(clickedGame);
+
+                // If already selected, open details
+                if (clickedIndex == _selectedIndex && viewModel.Parent.SelectedGame == clickedGame)
                 {
                     viewModel.Parent.OpenGameDetailsCommand.Execute(clickedGame);
                     e.Handled = true;
                 }
+                else
+                {
+                    // Select this game
+                    _selectedIndex = clickedIndex;
+                    viewModel.Parent.SelectedGame = clickedGame;
+                    CurrentSelectedGame = clickedGame;
+                }
             }
-            // Ensure list maintains focus for keyboard continuity
-            CarouselList.Focus();
+
+            CarouselScroller.Focus();
         }
     }
 
@@ -61,25 +138,60 @@ public partial class CarouselView : UserControl
     /// </summary>
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Enter && CarouselList.SelectedItem is GameModel selectedGame)
+        if (DataContext is not CarouselViewModel viewModel) return;
+        var games = viewModel.Games?.ToList();
+        if (games == null || games.Count == 0) return;
+
+        bool handled = false;
+
+        switch (e.Key)
         {
-            if (DataContext is CoverViewModel viewModel)
-            {
-                viewModel.Parent.OpenGameDetailsCommand.Execute(selectedGame);
-                e.Handled = true;
-            }
+            case Key.Left:
+                if (_selectedIndex > 0)
+                {
+                    _selectedIndex--;
+                    handled = true;
+                }
+                break;
+
+            case Key.Right:
+                if (_selectedIndex < games.Count - 1)
+                {
+                    _selectedIndex++;
+                    handled = true;
+                }
+                break;
+
+            case Key.Enter:
+                if (_selectedIndex >= 0 && _selectedIndex < games.Count)
+                {
+                    viewModel.Parent.OpenGameDetailsCommand.Execute(games[_selectedIndex]);
+                    handled = true;
+                }
+                break;
+        }
+
+        if (handled)
+        {
+            viewModel.Parent.SelectedGame = games[_selectedIndex];
+            CurrentSelectedGame = games[_selectedIndex];
+            e.Handled = true;
         }
     }
 
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
-        ScrollToSelected();
-    }
 
-    private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        ScrollToSelected();
+        // Force immediate recalculation by temporarily resetting offset
+        var currentOffset = CarouselScroller.Offset;
+        CarouselScroller.Offset = new Vector(0, 0);
+
+        // Then recalculate and apply the correct offset
+        Dispatcher.UIThread.Post(() =>
+        {
+            ScrollToSelected();
+        }, DispatcherPriority.Render);
     }
 
     /// <summary>
@@ -87,38 +199,37 @@ public partial class CarouselView : UserControl
     /// </summary>
     private void ScrollToSelected()
     {
-        var selectedItem = CarouselList.SelectedItem;
-        if (selectedItem == null) return;
+        if (DataContext is not CarouselViewModel vm || vm.Games == null) return;
+
+        var games = vm.Games.ToList();
+        if (_selectedIndex < 0 || _selectedIndex >= games.Count) return;
 
         Dispatcher.UIThread.Post(() =>
         {
-            var scrollViewer = CarouselList.GetValue(ListBox.ScrollProperty) as ScrollViewer
-                                ?? CarouselList.FindControl<ScrollViewer>("PART_ScrollViewer");
+            // Item dimensions - must match XAML exactly
+            double itemWidth = 220;
+            double itemMargin = 10; // 5px on each side
+            double stackSpacing = 10; // From StackLayout Spacing property
+            double totalItemSpacing = itemMargin + stackSpacing; // Distance between item centers
 
-            if (scrollViewer == null) return;
+            // The CenterPaddingConverter adds padding = (viewport/2 - itemWidth/2)
+            double viewportWidth = CarouselScroller.Viewport.Width;
+            double centerPadding = Math.Max(0, (viewportWidth / 2) - (itemWidth / 2));
 
-            var container = CarouselList.ContainerFromItem(selectedItem);
+            // Position of the selected item's left edge (including padding)
+            double itemLeftPosition = centerPadding + (_selectedIndex * (itemWidth + totalItemSpacing));
 
-            if (container != null)
-            {
-                var containerCenter = container.Bounds.Width / 2;
-                var relativePoint = container.TranslatePoint(new Point(containerCenter, 0), CarouselList);
+            // Center of the selected item
+            double itemCenterPosition = itemLeftPosition + (itemWidth / 2);
 
-                if (relativePoint.HasValue)
-                {
-                    double screenCenter = CarouselList.Bounds.Width / 2;
-                    double driftError = relativePoint.Value.X - screenCenter;
+            // We want the item center at the viewport center
+            double viewportCenter = viewportWidth / 2;
+            double targetOffset = itemCenterPosition - viewportCenter;
 
-                    scrollViewer.Offset = new Vector(scrollViewer.Offset.X + driftError, 0);
-                }
-            }
-            else
-            {
-                // Fallback if container isn't ready yet
-                CarouselList.ScrollIntoView(selectedItem);
-                Dispatcher.UIThread.Post(ScrollToSelected, DispatcherPriority.Background);
-            }
-        }, DispatcherPriority.Render);
+            // Apply with bounds checking
+            CarouselScroller.Offset = new Vector(Math.Max(0, targetOffset), 0);
+
+        }, DispatcherPriority.Background);
     }
 
     /// <summary>
@@ -126,19 +237,25 @@ public partial class CarouselView : UserControl
     /// </summary>
     private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
+        if (DataContext is not CarouselViewModel viewModel) return;
+        var games = viewModel.Games?.ToList();
+        if (games == null || games.Count == 0) return;
+
         if (e.Delta.Y < 0)
         {
-            if (CarouselList.SelectedIndex < CarouselList.ItemCount - 1)
-                CarouselList.SelectedIndex++;
+            if (_selectedIndex < games.Count - 1)
+                _selectedIndex++;
         }
         else
         {
-            if (CarouselList.SelectedIndex > 0)
-                CarouselList.SelectedIndex--;
+            if (_selectedIndex > 0)
+                _selectedIndex--;
         }
 
+        viewModel.Parent.SelectedGame = games[_selectedIndex];
+        CurrentSelectedGame = games[_selectedIndex];
+
         e.Handled = true;
-        // Keep focus on the list when using the wheel
-        CarouselList.Focus();
+        CarouselScroller.Focus();
     }
 }
