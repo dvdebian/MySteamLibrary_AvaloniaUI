@@ -11,10 +11,12 @@ public class CenterPaddingConverter : IValueConverter
     {
         if (value is double totalWidth && totalWidth > 0)
         {
-            // Formula: (Full Screen Width / 2) - (Half Card Width)
-            // This ensures the first card sits exactly in the middle at Offset 0
-            double sidePadding = (totalWidth / 2.0) - 110.0; // 110 is half of 220
-            return new Thickness(sidePadding, 0, sidePadding, 0);
+            double centerOfScreen = width / 2;
+            double halfItem = 110; // Half of 220px item width
+
+            double padding = centerOfScreen - halfItem;
+
+            return new Thickness(Math.Max(0, padding), 0, Math.Max(0, padding), 0);
         }
         return new Thickness(0);
     }

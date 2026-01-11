@@ -2,197 +2,260 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using MySteamLibrary.ViewModels;
 using MySteamLibrary.Models;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
+using System.Linq;
 
 namespace MySteamLibrary.Views;
 
-public partial class CarouselView : UserControl
+/// <summary>
+/// Code-behind for CarouselView with ItemsRepeater. 
+/// Handles magnetic centering and window resize recalculation.
+/// </summary>
+public partial class CarouselView : UserControl, INotifyPropertyChanged
 {
-    private MainViewModel? _mainVm;
-    private IDisposable? _boundsObserver;
+    private int _selectedIndex = 0;
+    private GameModel? _currentSelectedGame;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public GameModel? CurrentSelectedGame
+    {
+        get => _currentSelectedGame;
+        set
+        {
+            if (_currentSelectedGame != value)
+            {
+                _currentSelectedGame = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentSelectedGame)));
+            }
+        }
+    }
 
     public CarouselView()
     {
         InitializeComponent();
 
-        this.DataContextChanged += (s, e) => TryFindMainViewModel();
+        // Watch for selection changes from ViewModel
+        DataContextChanged += OnDataContextChanged;
 
+        // Listen for keyboard support
+        CarouselScroller.KeyDown += OnKeyDown;
+
+        // Ensure we center on load and grab focus
         AttachedToVisualTree += (s, e) =>
         {
-            TryFindMainViewModel();
-
-            // Use PropertyChanged on the ScrollViewer to watch Bounds
-            // This avoids the 'IObserver' lambda conversion error
-            PART_ScrollViewer.PropertyChanged += ScrollViewer_PropertyChanged;
-
-            Dispatcher.UIThread.Post(() => this.Focus(), DispatcherPriority.Background);
-        };
-
-        DetachedFromVisualTree += (s, e) =>
-        {
-            if (PART_ScrollViewer != null)
-                PART_ScrollViewer.PropertyChanged -= ScrollViewer_PropertyChanged;
-        };
-    }
-
-    private void TryFindMainViewModel()
-    {
-        if (DataContext is CoverViewModel coverVm && coverVm.Parent is MainViewModel vm1)
-            SetMainViewModel(vm1, "Direct Parent");
-        else if (DataContext is MainViewModel vm2)
-            SetMainViewModel(vm2, "Direct DataContext");
-        else if (VisualRoot is Window window && window.DataContext is MainViewModel vm3)
-            SetMainViewModel(vm3, "Window DataContext");
-        else
-            Debug.WriteLine($"[Carousel] DataContext is {DataContext?.GetType().Name ?? "NULL"}. Still searching...");
-    }
-
-    private void SetMainViewModel(MainViewModel vm, string source)
-    {
-        if (_mainVm == vm) return;
-        if (_mainVm != null) _mainVm.PropertyChanged -= OnViewModelPropertyChanged;
-
-        _mainVm = vm;
-        _mainVm.PropertyChanged += OnViewModelPropertyChanged;
-
-        Debug.WriteLine($"[Carousel] SUCCESS: Linked to MainViewModel via {source}");
-        ScrollToSelected();
-    }
-
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        // React to the selection changing in the MainViewModel
-        if (e.PropertyName == "SelectedGame")
-        {
             ScrollToSelected();
+            Dispatcher.UIThread.Post(() => CarouselScroller.Focus(), DispatcherPriority.Background);
+        };
+    }
+
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        if (DataContext is CarouselViewModel vm)
+        {
+            // Subscribe to selection changes
+            vm.Parent.PropertyChanged += (s, args) =>
+            {
+                if (args.PropertyName == nameof(MainViewModel.SelectedGame))
+                {
+                    CurrentSelectedGame = vm.Parent.SelectedGame;
+                    UpdateSelectedIndex();
+                    ScrollToSelected();
+                }
+            };
+
+            // Initial setup - select first game if nothing is selected
+            if (vm.Parent.SelectedGame == null && vm.Games != null)
+            {
+                var firstGame = vm.Games.FirstOrDefault();
+                if (firstGame != null)
+                {
+                    vm.Parent.SelectedGame = firstGame;
+                }
+            }
+
+            CurrentSelectedGame = vm.Parent.SelectedGame;
+            UpdateSelectedIndex();
+
+            // Delay initial scroll to ensure layout is ready
+            Dispatcher.UIThread.Post(() => ScrollToSelected(), DispatcherPriority.Loaded);
         }
     }
 
-    private void ScrollToSelected()
+    private void UpdateSelectedIndex()
     {
-        // DispatcherPriority.Loaded is crucial: it waits for the layout pass 
-        // to finish so the ScrollViewer knows its new actual width.
-        Dispatcher.UIThread.Post(() =>
+        if (DataContext is CarouselViewModel vm && vm.Parent.SelectedGame != null)
         {
-            var mainVm = _mainVm ?? (VisualRoot as Window)?.DataContext as MainViewModel;
-            var carouselVm = CarouselRepeater?.DataContext as CarouselViewModel;
-
-            if (mainVm?.SelectedGame == null || carouselVm == null || PART_ScrollViewer == null)
-                return;
-
-            var gamesList = carouselVm.Games.ToList();
-            int index = gamesList.FindIndex(g => g.Title == mainVm.SelectedGame.Title);
-
-            if (index == -1) return;
-
-            // --- SLOT-BASED MATH ---
-            // Card Width (220) + Spacing (10) = 230
-            const double itemFullWidth = 230;
-
-            // Because the CenterPaddingConverter handles centering at Offset 0,
-            // we just shift by the index multiplied by the slot width.
-            double targetX = index * itemFullWidth;
-
-            // Apply the offset. The VectorTransition in AXAML handles the slide animation.
-            PART_ScrollViewer.Offset = new Vector(targetX, 0);
-
-            Debug.WriteLine($"[Carousel] Re-centering: {mainVm.SelectedGame.Title} at Index {index}, Offset {targetX}");
-        }, DispatcherPriority.Loaded);
+            var games = vm.Games?.ToList();
+            if (games != null)
+            {
+                _selectedIndex = games.IndexOf(vm.Parent.SelectedGame);
+                if (_selectedIndex < 0) _selectedIndex = 0;
+            }
+        }
     }
 
+    /// <summary>
+    /// Handles clicking on a game cover.
+    /// </summary>
     private void OnCoverClicked(object? sender, PointerPressedEventArgs e)
     {
-        if (sender is Control c && c.DataContext is GameModel clickedGame && _mainVm != null)
+        if (sender is Control c && c.DataContext is GameModel clickedGame)
         {
-            if (_mainVm.SelectedGame?.Title == clickedGame.Title)
-                _mainVm.OpenGameDetailsCommand.Execute(clickedGame);
-            else
-                _mainVm.SelectedGame = clickedGame;
+            if (DataContext is CarouselViewModel viewModel)
+            {
+                var games = viewModel.Games?.ToList();
+                if (games == null) return;
 
-            this.Focus();
+                int clickedIndex = games.IndexOf(clickedGame);
+
+                // If already selected, open details
+                if (clickedIndex == _selectedIndex && viewModel.Parent.SelectedGame == clickedGame)
+                {
+                    viewModel.Parent.OpenGameDetailsCommand.Execute(clickedGame);
+                    e.Handled = true;
+                }
+                else
+                {
+                    // Select this game
+                    _selectedIndex = clickedIndex;
+                    viewModel.Parent.SelectedGame = clickedGame;
+                    CurrentSelectedGame = clickedGame;
+                }
+            }
+
+            CarouselScroller.Focus();
         }
     }
 
-    private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    /// <summary>
+    /// Handles keyboard actions.
+    /// </summary>
+    private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        var mainVm = _mainVm ?? (VisualRoot as Window)?.DataContext as MainViewModel;
-        var carouselVm = CarouselRepeater?.DataContext as CarouselViewModel;
-
-        if (mainVm == null || carouselVm == null) return;
-
-        var gamesList = carouselVm.Games.ToList();
-        if (gamesList.Count == 0) return;
-
-        string currentTitle = mainVm.SelectedGame?.Title ?? "";
-        int currentIndex = gamesList.FindIndex(g => g.Title == currentTitle);
-
-        if (currentIndex == -1) currentIndex = 0;
-
-        if (e.Delta.Y < 0 && currentIndex < gamesList.Count - 1)
-        {
-            mainVm.SelectedGame = gamesList[currentIndex + 1];
-        }
-        else if (e.Delta.Y > 0 && currentIndex > 0)
-        {
-            mainVm.SelectedGame = gamesList[currentIndex - 1];
-        }
-
-        e.Handled = true;
-        this.Focus();
-    }
-
-    protected override void OnKeyDown(KeyEventArgs e)
-    {
-        base.OnKeyDown(e);
-
-        var mainVm = _mainVm ?? (VisualRoot as Window)?.DataContext as MainViewModel;
-        var carouselVm = CarouselRepeater?.DataContext as CarouselViewModel;
-
-        if (mainVm == null || carouselVm == null) return;
-
-        var gamesList = carouselVm.Games.ToList();
-        if (gamesList.Count == 0) return;
-
-        string currentTitle = mainVm.SelectedGame?.Title ?? "";
-        int currentIndex = gamesList.FindIndex(g => g.Title == currentTitle);
-
-        if (currentIndex == -1) currentIndex = 0;
+        if (DataContext is not CarouselViewModel viewModel) return;
+        var games = viewModel.Games?.ToList();
+        if (games == null || games.Count == 0) return;
 
         bool handled = false;
-        if (e.Key == Key.Right && currentIndex < gamesList.Count - 1)
+
+        switch (e.Key)
         {
-            mainVm.SelectedGame = gamesList[currentIndex + 1];
-            handled = true;
-        }
-        else if (e.Key == Key.Left && currentIndex > 0)
-        {
-            mainVm.SelectedGame = gamesList[currentIndex - 1];
-            handled = true;
+            case Key.Left:
+                if (_selectedIndex > 0)
+                {
+                    _selectedIndex--;
+                    handled = true;
+                }
+                break;
+
+            case Key.Right:
+                if (_selectedIndex < games.Count - 1)
+                {
+                    _selectedIndex++;
+                    handled = true;
+                }
+                break;
+
+            case Key.Enter:
+                if (_selectedIndex >= 0 && _selectedIndex < games.Count)
+                {
+                    viewModel.Parent.OpenGameDetailsCommand.Execute(games[_selectedIndex]);
+                    handled = true;
+                }
+                break;
         }
 
         if (handled)
         {
+            viewModel.Parent.SelectedGame = games[_selectedIndex];
+            CurrentSelectedGame = games[_selectedIndex];
             e.Handled = true;
-            this.Focus();
         }
     }
 
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
-        ScrollToSelected();
-    }
 
-    private void ScrollViewer_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
-    {
-        if (e.Property == Control.BoundsProperty)
+        // Force immediate recalculation by temporarily resetting offset
+        var currentOffset = CarouselScroller.Offset;
+        CarouselScroller.Offset = new Vector(0, 0);
+
+        // Then recalculate and apply the correct offset
+        Dispatcher.UIThread.Post(() =>
         {
             ScrollToSelected();
+        }, DispatcherPriority.Render);
+    }
+
+    /// <summary>
+    /// Centers the selected item within the ScrollViewer.
+    /// </summary>
+    private void ScrollToSelected()
+    {
+        if (DataContext is not CarouselViewModel vm || vm.Games == null) return;
+
+        var games = vm.Games.ToList();
+        if (_selectedIndex < 0 || _selectedIndex >= games.Count) return;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            // Item dimensions - must match XAML exactly
+            double itemWidth = 220;
+            double itemMargin = 10; // 5px on each side
+            double stackSpacing = 10; // From StackLayout Spacing property
+            double totalItemSpacing = itemMargin + stackSpacing; // Distance between item centers
+
+            // The CenterPaddingConverter adds padding = (viewport/2 - itemWidth/2)
+            double viewportWidth = CarouselScroller.Viewport.Width;
+            double centerPadding = Math.Max(0, (viewportWidth / 2) - (itemWidth / 2));
+
+            // Position of the selected item's left edge (including padding)
+            double itemLeftPosition = centerPadding + (_selectedIndex * (itemWidth + totalItemSpacing));
+
+            // Center of the selected item
+            double itemCenterPosition = itemLeftPosition + (itemWidth / 2);
+
+            // We want the item center at the viewport center
+            double viewportCenter = viewportWidth / 2;
+            double targetOffset = itemCenterPosition - viewportCenter;
+
+            // Apply with bounds checking
+            CarouselScroller.Offset = new Vector(Math.Max(0, targetOffset), 0);
+
+        }, DispatcherPriority.Background);
+    }
+
+    /// <summary>
+    /// Handles the mouse wheel to navigate items.
+    /// </summary>
+    private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    {
+        if (DataContext is not CarouselViewModel viewModel) return;
+        var games = viewModel.Games?.ToList();
+        if (games == null || games.Count == 0) return;
+
+        if (e.Delta.Y < 0)
+        {
+            if (_selectedIndex < games.Count - 1)
+                _selectedIndex++;
         }
+        else
+        {
+            if (_selectedIndex > 0)
+                _selectedIndex--;
+        }
+
+        viewModel.Parent.SelectedGame = games[_selectedIndex];
+        CurrentSelectedGame = games[_selectedIndex];
+
+        e.Handled = true;
+        CarouselScroller.Focus();
     }
 }
