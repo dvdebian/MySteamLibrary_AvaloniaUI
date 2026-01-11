@@ -9,16 +9,12 @@ public class CenterPaddingConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is double width && width > 0)
+        if (value is double totalWidth && totalWidth > 0)
         {
-            // Half of the screen minus half of your 220px card
-            double centerOfScreen = width / 2;
-            double halfItem = 110;
-
-            double padding = centerOfScreen - halfItem;
-
-            // This ensures that when ScrollOffset is 0, the first item is centered
-            return new Thickness(Math.Max(0, padding), 0, Math.Max(0, padding), 0);
+            // Formula: (Full Screen Width / 2) - (Half Card Width)
+            // This ensures the first card sits exactly in the middle at Offset 0
+            double sidePadding = (totalWidth / 2.0) - 110.0; // 110 is half of 220
+            return new Thickness(sidePadding, 0, sidePadding, 0);
         }
         return new Thickness(0);
     }

@@ -14,15 +14,29 @@ namespace MySteamLibrary.Views;
 public partial class CarouselView : UserControl
 {
     private MainViewModel? _mainVm;
+    private IDisposable? _boundsObserver;
 
     public CarouselView()
     {
         InitializeComponent();
+
         this.DataContextChanged += (s, e) => TryFindMainViewModel();
+
         AttachedToVisualTree += (s, e) =>
         {
             TryFindMainViewModel();
+
+            // Use PropertyChanged on the ScrollViewer to watch Bounds
+            // This avoids the 'IObserver' lambda conversion error
+            PART_ScrollViewer.PropertyChanged += ScrollViewer_PropertyChanged;
+
             Dispatcher.UIThread.Post(() => this.Focus(), DispatcherPriority.Background);
+        };
+
+        DetachedFromVisualTree += (s, e) =>
+        {
+            if (PART_ScrollViewer != null)
+                PART_ScrollViewer.PropertyChanged -= ScrollViewer_PropertyChanged;
         };
     }
 
@@ -42,50 +56,53 @@ public partial class CarouselView : UserControl
     {
         if (_mainVm == vm) return;
         if (_mainVm != null) _mainVm.PropertyChanged -= OnViewModelPropertyChanged;
+
         _mainVm = vm;
         _mainVm.PropertyChanged += OnViewModelPropertyChanged;
+
         Debug.WriteLine($"[Carousel] SUCCESS: Linked to MainViewModel via {source}");
         ScrollToSelected();
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        // React to the selection changing in the MainViewModel
         if (e.PropertyName == "SelectedGame")
         {
-            Debug.WriteLine($"[Carousel] PropertyChanged detected: SelectedGame is now {_mainVm?.SelectedGame?.Title ?? "NULL"}");
             ScrollToSelected();
         }
     }
 
     private void ScrollToSelected()
     {
-        var mainVm = (VisualRoot as Window)?.DataContext as MainViewModel;
-        var carouselVm = CarouselRepeater?.DataContext as CarouselViewModel;
+        // DispatcherPriority.Loaded is crucial: it waits for the layout pass 
+        // to finish so the ScrollViewer knows its new actual width.
+        Dispatcher.UIThread.Post(() =>
+        {
+            var mainVm = _mainVm ?? (VisualRoot as Window)?.DataContext as MainViewModel;
+            var carouselVm = CarouselRepeater?.DataContext as CarouselViewModel;
 
-        if (mainVm?.SelectedGame == null || carouselVm == null || PART_ScrollViewer == null)
-            return;
+            if (mainVm?.SelectedGame == null || carouselVm == null || PART_ScrollViewer == null)
+                return;
 
-        var gamesList = carouselVm.Games.ToList();
-        int index = gamesList.FindIndex(g => g.Title == mainVm.SelectedGame.Title);
+            var gamesList = carouselVm.Games.ToList();
+            int index = gamesList.FindIndex(g => g.Title == mainVm.SelectedGame.Title);
 
-        if (index == -1) return;
+            if (index == -1) return;
 
-        // --- COORDINATED MATH ---
-        // These must match your AXAML Spacing (10) and Card Width (220)
-        const double itemWidth = 220;
-        const double spacing = 10;
-        const double itemFullWidth = itemWidth + spacing;
+            // --- SLOT-BASED MATH ---
+            // Card Width (220) + Spacing (10) = 230
+            const double itemFullWidth = 230;
 
-        // The target offset is simply the index multiplied by the full width of one slot.
-        // Because our Converter (above) already centered the first item at 0,
-        // moving by exactly 'itemFullWidth' will center the next one perfectly.
-        double targetX = index * itemFullWidth;
+            // Because the CenterPaddingConverter handles centering at Offset 0,
+            // we just shift by the index multiplied by the slot width.
+            double targetX = index * itemFullWidth;
 
-        // Apply the offset
-        // The VectorTransition in AXAML handles the smooth sliding animation
-        PART_ScrollViewer.Offset = new Vector(targetX, 0);
+            // Apply the offset. The VectorTransition in AXAML handles the slide animation.
+            PART_ScrollViewer.Offset = new Vector(targetX, 0);
 
-        Debug.WriteLine($"[Carousel] Snapping to {mainVm.SelectedGame.Title} at index {index}. Offset: {targetX}");
+            Debug.WriteLine($"[Carousel] Re-centering: {mainVm.SelectedGame.Title} at Index {index}, Offset {targetX}");
+        }, DispatcherPriority.Loaded);
     }
 
     private void OnCoverClicked(object? sender, PointerPressedEventArgs e)
@@ -96,102 +113,71 @@ public partial class CarouselView : UserControl
                 _mainVm.OpenGameDetailsCommand.Execute(clickedGame);
             else
                 _mainVm.SelectedGame = clickedGame;
+
             this.Focus();
         }
     }
 
-    // UPDATED: Find current index by Title to ensure the selection changes
-    // Updated: Uses FindIndex with Title to ensure selection actually changes
     private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
-        Debug.WriteLine($"[Carousel] PointerWheel detected. Delta: {e.Delta.Y}");
-
-        // 1. Get MainVM (Global Selection State)
         var mainVm = _mainVm ?? (VisualRoot as Window)?.DataContext as MainViewModel;
-
-        // 2. Get the list of games from CarouselViewModel (Verified by your logs!)
         var carouselVm = CarouselRepeater?.DataContext as CarouselViewModel;
 
-        if (mainVm == null || carouselVm == null)
-        {
-            Debug.WriteLine($"[Carousel] Wheel ABORT: MainVM={mainVm != null}, CarouselVM={carouselVm != null}");
-            return;
-        }
+        if (mainVm == null || carouselVm == null) return;
 
-        // 3. Get the list of games
-        // Note: Assuming CarouselViewModel has the 'Games' collection
         var gamesList = carouselVm.Games.ToList();
         if (gamesList.Count == 0) return;
 
-        // 4. Find index by Title
         string currentTitle = mainVm.SelectedGame?.Title ?? "";
         int currentIndex = gamesList.FindIndex(g => g.Title == currentTitle);
 
         if (currentIndex == -1) currentIndex = 0;
 
-        // 5. Change selection
         if (e.Delta.Y < 0 && currentIndex < gamesList.Count - 1)
         {
             mainVm.SelectedGame = gamesList[currentIndex + 1];
-            Debug.WriteLine($"[Carousel] Wheel SUCCESS: Next -> {gamesList[currentIndex + 1].Title}");
         }
         else if (e.Delta.Y > 0 && currentIndex > 0)
         {
             mainVm.SelectedGame = gamesList[currentIndex - 1];
-            Debug.WriteLine($"[Carousel] Wheel SUCCESS: Prev -> {gamesList[currentIndex - 1].Title}");
         }
 
         e.Handled = true;
         this.Focus();
     }
 
-    // Updated: Keyboard navigation now uses Title-based search as well
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
 
-        // 1. Get MainVM via the Window (Source of truth for selection)
-        var mainVm = (VisualRoot as Window)?.DataContext as MainViewModel;
-
-        // 2. Get CarouselVM directly from the Repeater's DataContext
+        var mainVm = _mainVm ?? (VisualRoot as Window)?.DataContext as MainViewModel;
         var carouselVm = CarouselRepeater?.DataContext as CarouselViewModel;
 
-        if (mainVm == null || carouselVm == null)
-        {
-            Debug.WriteLine($"[Carousel] KeyDown ABORT: MainVM={mainVm != null}, CarouselVM={carouselVm != null}");
-            return;
-        }
+        if (mainVm == null || carouselVm == null) return;
 
-        // 3. Get the list of games
         var gamesList = carouselVm.Games.ToList();
         if (gamesList.Count == 0) return;
 
-        // 4. Find current index by Title
         string currentTitle = mainVm.SelectedGame?.Title ?? "";
         int currentIndex = gamesList.FindIndex(g => g.Title == currentTitle);
 
-        // Default to 0 if nothing is selected
         if (currentIndex == -1) currentIndex = 0;
 
-        // 5. Handle Navigation Keys
         bool handled = false;
         if (e.Key == Key.Right && currentIndex < gamesList.Count - 1)
         {
             mainVm.SelectedGame = gamesList[currentIndex + 1];
-            Debug.WriteLine($"[Carousel] Key SUCCESS: Right -> {gamesList[currentIndex + 1].Title}");
             handled = true;
         }
         else if (e.Key == Key.Left && currentIndex > 0)
         {
             mainVm.SelectedGame = gamesList[currentIndex - 1];
-            Debug.WriteLine($"[Carousel] Key SUCCESS: Left -> {gamesList[currentIndex - 1].Title}");
             handled = true;
         }
 
         if (handled)
         {
             e.Handled = true;
-            // Keep focus on this control so subsequent key presses work
             this.Focus();
         }
     }
@@ -200,5 +186,13 @@ public partial class CarouselView : UserControl
     {
         base.OnSizeChanged(e);
         ScrollToSelected();
+    }
+
+    private void ScrollViewer_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == Control.BoundsProperty)
+        {
+            ScrollToSelected();
+        }
     }
 }
