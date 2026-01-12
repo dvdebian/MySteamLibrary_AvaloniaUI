@@ -33,31 +33,43 @@
                            Foreground="White"
                            LetterSpacing="1"/>
                 
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                    <Button Classes="Nav" Content="LIST" Command="{Binding SelectModeCommand}" CommandParameter="List" />
-                    <Button Classes="Nav" Content="GRID" Command="{Binding SelectModeCommand}" CommandParameter="Grid" />
-                    <Button Classes="Nav" Content="COVER" Command="{Binding SelectModeCommand}" CommandParameter="Cover" />
-                    <Button Classes="Nav" Content="CAROUSEL" Command="{Binding SelectModeCommand}" CommandParameter="Carousel" />
+                <Grid ColumnDefinitions="*, Auto">
                     
-                    <Separator Margin="10,0" Width="1" Background="#3d4450"/>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="5">
+                        <Button Classes="Nav" Content="LIST" Command="{Binding SelectModeCommand}" CommandParameter="List" />
+                        <Button Classes="Nav" Content="GRID" Command="{Binding SelectModeCommand}" CommandParameter="Grid" />
+                        <Button Classes="Nav" Content="COVER" Command="{Binding SelectModeCommand}" CommandParameter="Cover" />
+                        <Button Classes="Nav" Content="CAROUSEL" Command="{Binding SelectModeCommand}" CommandParameter="Carousel" />
+                    </StackPanel>
 
-                    <Button Classes="Nav" 
-                            Command="{Binding RefreshLibraryCommand}"
-                            IsEnabled="{Binding !IsRefreshing}">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="REFRESH" VerticalAlignment="Center"/>
-                            <ProgressBar IsIndeterminate="True" 
-                                         Width="50" 
-                                         Height="4"
-                                         VerticalAlignment="Center"
-                                         Foreground="#67c1f5"
-                                         Background="#3d4450"
-                                         IsVisible="{Binding IsRefreshing}" />
-                        </StackPanel>
-                    </Button>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                        
+                        <Button Classes="Nav" 
+                                Command="{Binding RefreshLibraryCommand}"
+                                IsEnabled="{Binding !IsRefreshing}"
+                                ToolTip.Tip="Refresh Library">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock Text="REFRESH" VerticalAlignment="Center"/>
+                                
+                                <ProgressBar IsIndeterminate="True" 
+                                             Width="30" Height="2"
+                                             Foreground="#67c1f5" 
+                                             Background="#3d4450"
+                                             VerticalAlignment="Center"
+                                             IsVisible="{Binding IsRefreshing}" />
+                            </StackPanel>
+                        </Button>
 
-                    <Button Classes="Nav" Content="SETTINGS" Command="{Binding ToggleSettingsCommand}" />
-                </StackPanel>
+                        <Button Classes="Nav" 
+                                Width="40" Height="40"
+                                Command="{Binding ToggleSettingsCommand}"
+                                ToolTip.Tip="Settings"
+                                Background="Transparent">
+                            <Path Data="M19.14,12.94c.04-.3,.06-.61,.06-.94c0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14,.23-.41,.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39,.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24,0-.43,.17-.47,.41l-.36,2.54c-.59,.24-1.13,.57-1.62,.94l-2.39-.96c-.22-.08-.47,0-.59,.22L3.31,8.87c-.12,.21-.08,.47,.12,.61l2.03,1.58c-.05,.3-.09,.63-.09,.94s.02,.64,.07,.94l-2.03,1.58c-.18,.14-.23,.41-.12,.61l1.92,3.32c.12,.22,.37,.29,.59,.22l2.39-.96c.5,.38,1.03,.7,1.62,.94l.36,2.54c.05,.24,.24,.41,.48,.41h3.84c.24,0,.44-.17,.47-.41l.36-2.54c.59-.24,1.13-.56,1.62-.94l2.39,.96c.22,.08,.47,0,.59-.22l1.92-3.32c.12-.21,.07-.47-.12-.61l-2.01-1.58ZM12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6s-1.62,3.6-3.6,3.6Z" 
+                                  Fill="White" Stretch="Uniform" Width="18" VerticalAlignment="Center"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
                 
                 <TextBox Watermark="SEARCH" 
                          Text="{Binding SearchText}" 
