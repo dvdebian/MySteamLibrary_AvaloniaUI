@@ -26,7 +26,7 @@ public enum CarouselEffect
 public class CarouselTransformConverter : IMultiValueConverter
 {
     // CHANGE THIS TO TEST DIFFERENT LOOKS
-    private const CarouselEffect CurrentMode = CarouselEffect.ModernStack;
+    private const CarouselEffect CurrentMode = CarouselEffect.Wave;
 
     public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
@@ -38,11 +38,13 @@ public class CarouselTransformConverter : IMultiValueConverter
         }
         double adaptiveBase = Math.Clamp(windowWidth / 1920.0, 0.75, 1.1);
 
+        // --- HEIGHT FIX ---
         if (parameter?.ToString() == "GetHeight")
         {
-            // Arc and Wave need more vertical breathing room
+            // Arc and Wave need more space because they "dip". 
+            // Flat modes (ModernStack) use 1.4 to stay closer to the title.
             bool needsExtraHeight = CurrentMode == CarouselEffect.ModernStackArc || CurrentMode == CarouselEffect.Wave;
-            return 330 * (needsExtraHeight ? 1.8 : 1.6) * adaptiveBase;
+            return 330 * (needsExtraHeight ? 1.6 : 1.6) * adaptiveBase;
         }
 
         double scaleX = 1.0, scaleY = 1.0, skewY = 0.0, translateX = 0.0, translateY = 0.0;
@@ -60,7 +62,19 @@ public class CarouselTransformConverter : IMultiValueConverter
 
             if (diff == 0)
             {
+                // CENTER ITEM LOGIC
                 scaleX = scaleY = 1.4 * adaptiveBase;
+
+                // Lift the center item ONLY for modes that dip down.
+                // This keeps the center of ModernStack perfectly centered in its row.
+                if (CurrentMode == CarouselEffect.ModernStackArc || CurrentMode == CarouselEffect.Wave)
+                {
+                    translateY = -20 * adaptiveBase;
+                }
+                else
+                {
+                    translateY = 0; // Flat modes stay at the baseline
+                }
             }
             else if (selectedIndex != -1)
             {
@@ -68,45 +82,55 @@ public class CarouselTransformConverter : IMultiValueConverter
                 {
                     case CarouselEffect.ModernStack:
                         ApplyModernStack(diff, absDiff, adaptiveBase, out scaleX, out scaleY, out translateX, out skewY);
+                        // Ensure ModernStack stays on the baseline
+                        translateY = 0;
                         break;
 
                     case CarouselEffect.ModernStackArc:
-                        ApplyModernStack(diff, absDiff, adaptiveBase, out scaleX, out scaleY, out translateX, out skewY);
-                        translateY = absDiff * 18.0 * adaptiveBase; // The "Dip"
+                        scaleX = scaleY = Math.Max(0.5, 1.0 - (absDiff * 0.12)) * adaptiveBase;
+                        translateX = (diff * 50) * adaptiveBase;
+
+                        // --- ARC ADJUSTMENT ---
+                        // We use a small lift (-20) so the center is higher, 
+                        // but the dipping sides don't go past the "floor" of the row.
+                        double dropPerItem = 20 * adaptiveBase;
+                        double liftOffset = 20 * adaptiveBase;
+                        translateY = (absDiff * dropPerItem) - liftOffset;
+
+                        skewY = (diff * 4);
                         break;
 
                     case CarouselEffect.ConsoleShelf:
                         scaleX = scaleY = 0.85 * adaptiveBase;
-                        translateX = (diff < 0 ? 60 : -60) * adaptiveBase; // Tight overlap
+                        translateX = (diff < 0 ? 60 : -60) * adaptiveBase;
                         translateY = 0;
                         break;
 
                     case CarouselEffect.DeepSpiral:
                         scaleX = scaleY = Math.Max(0.3, 1.0 - (absDiff * 0.2)) * adaptiveBase;
                         translateX = (diff * 40 * adaptiveBase);
-                        translateY = (diff * 20 * adaptiveBase); // Spiral downward
-                        skewY = diff * 15; // Aggressive rotation
+                        translateY = (diff * 20 * adaptiveBase);
+                        skewY = diff * 15;
                         break;
 
                     case CarouselEffect.Wave:
                         scaleX = scaleY = 0.9 * adaptiveBase;
-                        translateX = (diff * 10 * adaptiveBase);
-                        // Moves up and down like a wave
-                        translateY = Math.Sin(absDiff) * 40 * adaptiveBase;
+                        translateX = (diff * 15 * adaptiveBase);
+                        // Center wave around a slightly lifted baseline
+                        translateY = (Math.Sin(diff * 0.8) * 35 * adaptiveBase) - (30 * adaptiveBase);
                         break;
 
                     case CarouselEffect.CardsOnTable:
                         scaleX = 0.9 * adaptiveBase;
-                        scaleY = 0.6 * adaptiveBase; // Smashed vertically
+                        scaleY = 0.6 * adaptiveBase;
                         skewY = (diff < 0 ? -15 : 15);
                         translateX = (diff * 20 * adaptiveBase);
-                        translateY = 40 * adaptiveBase; // Drop them all down
+                        translateY = 20 * adaptiveBase;
                         break;
 
                     case CarouselEffect.Skyline:
                         scaleX = scaleY = 0.9 * adaptiveBase;
-                        // Odd items are higher, even items are lower
-                        translateY = (currentIndex % 2 == 0 ? 0 : 50) * adaptiveBase;
+                        translateY = (currentIndex % 2 == 0 ? -20 : 20) * adaptiveBase;
                         translateX = (diff * 5 * adaptiveBase);
                         break;
 
@@ -114,11 +138,13 @@ public class CarouselTransformConverter : IMultiValueConverter
                         scaleX = scaleY = 0.9 * adaptiveBase;
                         translateX = (diff < 0 ? 80 : -80) * adaptiveBase + (diff * -15 * adaptiveBase);
                         skewY = diff < 0 ? -8 : 8;
+                        translateY = 0;
                         break;
 
                     case CarouselEffect.FlatZoom:
                         scaleX = scaleY = 0.9 * adaptiveBase;
                         translateX = (diff * 10 * adaptiveBase);
+                        translateY = 0;
                         break;
                 }
             }
