@@ -200,8 +200,8 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
 
             // ScrollViewer negative margin: -80px for small, 0px for large
             // This pulls games UP above the row boundary for small windows
-            double scrollMargin = -80 + (ratio * 80);
-            CarouselScroller.Margin = new Thickness(0, scrollMargin, 0, 0);
+            double scrollMargin = -90 + (ratio * 90);
+            CarouselScroller.Margin = new Thickness(0, scrollMargin, 0, 15);
         }
 
         // Force immediate recalculation by temporarily resetting offset

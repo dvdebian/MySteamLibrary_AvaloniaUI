@@ -26,7 +26,7 @@ public enum CarouselEffect
 public class CarouselTransformConverter : IMultiValueConverter
 {
     // CHANGE THIS TO TEST DIFFERENT LOOKS
-    private const CarouselEffect CurrentMode = CarouselEffect.InvertedV;
+    private const CarouselEffect CurrentMode = CarouselEffect.ModernStack;
 
     public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
