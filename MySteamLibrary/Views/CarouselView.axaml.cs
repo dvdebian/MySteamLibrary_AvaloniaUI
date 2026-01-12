@@ -186,19 +186,22 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
         // Get the MainGrid and update row height dynamically
         if (this.FindControl<Grid>("MainGrid") is Grid mainGrid && mainGrid.RowDefinitions.Count > 0)
         {
-            // Calculate dynamic row height based on window height
+            // Calculate dynamic row height and margin based on window height
             double height = e.NewSize.Height;
-            double minHeight = 500;    // Start scaling from 500px instead of 600px
+            double minHeight = 500;
             double maxHeight = 1080;
-            double minRowHeight = 0;   // No space for small windows (games as high as possible)
-            double maxRowHeight = 180; // Large space for large windows (games lower)
 
             double clampedHeight = Math.Clamp(height, minHeight, maxHeight);
             double ratio = (clampedHeight - minHeight) / (maxHeight - minHeight);
-            double rowHeight = minRowHeight + (ratio * (maxRowHeight - minRowHeight));
 
-            // Update the first row height
+            // Row height: 0px for small, 180px for large
+            double rowHeight = 0 + (ratio * 180);
             mainGrid.RowDefinitions[0] = new RowDefinition(rowHeight, GridUnitType.Pixel);
+
+            // ScrollViewer negative margin: -80px for small, 0px for large
+            // This pulls games UP above the row boundary for small windows
+            double scrollMargin = -80 + (ratio * 80);
+            CarouselScroller.Margin = new Thickness(0, scrollMargin, 0, 0);
         }
 
         // Force immediate recalculation by temporarily resetting offset
