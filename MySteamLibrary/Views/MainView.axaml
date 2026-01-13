@@ -19,7 +19,7 @@
             <views:CoverView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:CarouselViewModel}">
-            <views:CarouselView />
+            <views:CarouselView x:Name="CarouselViewInstance"/>
         </DataTemplate>
     </UserControl.DataTemplates>
 
@@ -40,6 +40,12 @@
                         <Button Classes="Nav" Content="GRID" Command="{Binding SelectModeCommand}" CommandParameter="Grid" />
                         <Button Classes="Nav" Content="COVER" Command="{Binding SelectModeCommand}" CommandParameter="Cover" />
                         <Button Classes="Nav" Content="CAROUSEL" Command="{Binding SelectModeCommand}" CommandParameter="Carousel" />
+                        
+                        <!-- Effect Button (only visible in Carousel mode) -->
+                        <Button Classes="Nav" 
+                                Content="EFFECT" 
+                                Click="OnEffectButtonClicked"
+                                IsVisible="{Binding IsCarouselMode}"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">

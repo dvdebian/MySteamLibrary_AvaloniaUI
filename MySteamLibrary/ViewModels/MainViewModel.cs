@@ -76,6 +76,12 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private GameModel? _selectedGame;
 
+    /// <summary>
+    /// Returns true if the current active view is the Carousel view.
+    /// Used to show/hide the Effect button in the UI.
+    /// </summary>
+    public bool IsCarouselMode => ActiveView == _carouselView;
+
     // The collection bound to all UI views (List, Grid, etc.)
     private readonly ObservableCollection<GameModel> _allGames = new();
 
@@ -108,6 +114,14 @@ public partial class MainViewModel : ViewModelBase
     partial void OnSearchTextChanged(string value)
     {
         ApplyFilteringAndSorting();
+    }
+
+    /// <summary>
+    /// Called automatically when ActiveView changes to notify UI about IsCarouselMode.
+    /// </summary>
+    partial void OnActiveViewChanged(LibraryPresenterViewModel value)
+    {
+        OnPropertyChanged(nameof(IsCarouselMode));
     }
 
     /// <summary>
