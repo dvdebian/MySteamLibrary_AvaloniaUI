@@ -9,24 +9,10 @@ using MySteamLibrary.Models;
 
 namespace MySteamLibrary.Converters;
 
-public enum CarouselEffect
-{
-    ModernStack,      // Your current favorite
-    InvertedV,        // Classic lean
-    ModernStackArc,   // The "dipping" look
-    FlatZoom,         // No skew, just zoom
-    // --- NEW MODES ---
-    ConsoleShelf,     // Flat, tight overlap, no height change (like PS5/Switch)
-    DeepSpiral,       // Aggressive scaling and rotation for a 3D tunnel look
-    Wave,             // Up and down oscillation
-    CardsOnTable,     // Perspective that makes cards look like they are lying back
-    Skyline           // Alternating heights for a jagged, urban look
-}
-
 public class CarouselTransformConverter : IMultiValueConverter
 {
-    // CHANGE THIS TO TEST DIFFERENT LOOKS
-    private const CarouselEffect CurrentMode = CarouselEffect.Wave;
+    // Made public and static so it can be accessed from CarouselView
+    public static CarouselEffect CurrentMode { get; set; } = CarouselEffect.ModernStack;
 
     public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
@@ -41,8 +27,6 @@ public class CarouselTransformConverter : IMultiValueConverter
         // --- HEIGHT FIX ---
         if (parameter?.ToString() == "GetHeight")
         {
-            // Arc and Wave need more space because they "dip". 
-            // Flat modes (ModernStack) use 1.4 to stay closer to the title.
             bool needsExtraHeight = CurrentMode == CarouselEffect.ModernStackArc || CurrentMode == CarouselEffect.Wave;
             return 330 * (needsExtraHeight ? 1.6 : 1.6) * adaptiveBase;
         }
@@ -62,18 +46,15 @@ public class CarouselTransformConverter : IMultiValueConverter
 
             if (diff == 0)
             {
-                // CENTER ITEM LOGIC
                 scaleX = scaleY = 1.4 * adaptiveBase;
 
-                // Lift the center item ONLY for modes that dip down.
-                // This keeps the center of ModernStack perfectly centered in its row.
                 if (CurrentMode == CarouselEffect.ModernStackArc || CurrentMode == CarouselEffect.Wave)
                 {
                     translateY = -20 * adaptiveBase;
                 }
                 else
                 {
-                    translateY = 0; // Flat modes stay at the baseline
+                    translateY = 0;
                 }
             }
             else if (selectedIndex != -1)
@@ -82,21 +63,15 @@ public class CarouselTransformConverter : IMultiValueConverter
                 {
                     case CarouselEffect.ModernStack:
                         ApplyModernStack(diff, absDiff, adaptiveBase, out scaleX, out scaleY, out translateX, out skewY);
-                        // Ensure ModernStack stays on the baseline
                         translateY = 0;
                         break;
 
                     case CarouselEffect.ModernStackArc:
                         scaleX = scaleY = Math.Max(0.5, 1.0 - (absDiff * 0.12)) * adaptiveBase;
                         translateX = (diff * 50) * adaptiveBase;
-
-                        // --- ARC ADJUSTMENT ---
-                        // We use a small lift (-20) so the center is higher, 
-                        // but the dipping sides don't go past the "floor" of the row.
                         double dropPerItem = 20 * adaptiveBase;
                         double liftOffset = 20 * adaptiveBase;
                         translateY = (absDiff * dropPerItem) - liftOffset;
-
                         skewY = (diff * 4);
                         break;
 
@@ -116,7 +91,6 @@ public class CarouselTransformConverter : IMultiValueConverter
                     case CarouselEffect.Wave:
                         scaleX = scaleY = 0.9 * adaptiveBase;
                         translateX = (diff * 15 * adaptiveBase);
-                        // Center wave around a slightly lifted baseline
                         translateY = (Math.Sin(diff * 0.8) * 35 * adaptiveBase) - (30 * adaptiveBase);
                         break;
 

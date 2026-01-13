@@ -5,6 +5,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using MySteamLibrary.ViewModels;
 using MySteamLibrary.Models;
+using MySteamLibrary.Converters;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -14,12 +15,14 @@ namespace MySteamLibrary.Views;
 
 /// <summary>
 /// Code-behind for CarouselView with ItemsRepeater. 
-/// Handles magnetic centering and window resize recalculation.
+/// Handles magnetic centering, window resize recalculation, and effect selection overlay.
 /// </summary>
 public partial class CarouselView : UserControl, INotifyPropertyChanged
 {
     private int _selectedIndex = 0;
     private GameModel? _currentSelectedGame;
+    private bool _isEffectOverlayVisible;
+    private CarouselEffect _currentEffect;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -36,17 +39,45 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
         }
     }
 
+    public bool IsEffectOverlayVisible
+    {
+        get => _isEffectOverlayVisible;
+        set
+        {
+            if (_isEffectOverlayVisible != value)
+            {
+                _isEffectOverlayVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsEffectOverlayVisible)));
+            }
+        }
+    }
+
+    public CarouselEffect CurrentEffect
+    {
+        get => _currentEffect;
+        set
+        {
+            if (_currentEffect != value)
+            {
+                _currentEffect = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentEffect)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentEffectName)));
+            }
+        }
+    }
+
+    public string CurrentEffectName => FormatEffectName(CurrentEffect);
+
     public CarouselView()
     {
         InitializeComponent();
 
-        // Watch for selection changes from ViewModel
-        DataContextChanged += OnDataContextChanged;
+        // Initialize with the current effect from the converter
+        CurrentEffect = CarouselTransformConverter.CurrentMode;
 
-        // Listen for keyboard support
+        DataContextChanged += OnDataContextChanged;
         CarouselScroller.KeyDown += OnKeyDown;
 
-        // Ensure we center on load and grab focus
         AttachedToVisualTree += (s, e) =>
         {
             ScrollToSelected();
@@ -54,11 +85,70 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
         };
     }
 
+    private string FormatEffectName(CarouselEffect effect)
+    {
+        // Convert camelCase to spaced words
+        string name = effect.ToString();
+        string result = string.Empty;
+
+        for (int i = 0; i < name.Length; i++)
+        {
+            if (i > 0 && char.IsUpper(name[i]))
+            {
+                result += " ";
+            }
+            result += name[i];
+        }
+
+        return result.ToUpper();
+    }
+
+    public void ToggleEffectOverlay()
+    {
+        IsEffectOverlayVisible = !IsEffectOverlayVisible;
+    }
+
+    public void PreviousEffect()
+    {
+        var effects = Enum.GetValues<CarouselEffect>();
+        int currentIndex = Array.IndexOf(effects, CurrentEffect);
+        int newIndex = (currentIndex - 1 + effects.Length) % effects.Length;
+
+        CurrentEffect = effects[newIndex];
+        CarouselTransformConverter.CurrentMode = CurrentEffect;
+
+        // Force refresh of the visual transforms
+        RefreshCarouselTransforms();
+    }
+
+    public void NextEffect()
+    {
+        var effects = Enum.GetValues<CarouselEffect>();
+        int currentIndex = Array.IndexOf(effects, CurrentEffect);
+        int newIndex = (currentIndex + 1) % effects.Length;
+
+        CurrentEffect = effects[newIndex];
+        CarouselTransformConverter.CurrentMode = CurrentEffect;
+
+        // Force refresh of the visual transforms
+        RefreshCarouselTransforms();
+    }
+
+    private void RefreshCarouselTransforms()
+    {
+        // Trigger a re-evaluation of the bindings by temporarily changing selection
+        var temp = CurrentSelectedGame;
+        CurrentSelectedGame = null;
+        Dispatcher.UIThread.Post(() =>
+        {
+            CurrentSelectedGame = temp;
+        }, DispatcherPriority.Background);
+    }
+
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         if (DataContext is CarouselViewModel vm)
         {
-            // Subscribe to selection changes
             vm.Parent.PropertyChanged += (s, args) =>
             {
                 if (args.PropertyName == nameof(MainViewModel.SelectedGame))
@@ -69,7 +159,6 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
                 }
             };
 
-            // Initial setup - select first game if nothing is selected
             if (vm.Parent.SelectedGame == null && vm.Games != null)
             {
                 var firstGame = vm.Games.FirstOrDefault();
@@ -82,7 +171,6 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
             CurrentSelectedGame = vm.Parent.SelectedGame;
             UpdateSelectedIndex();
 
-            // Delay initial scroll to ensure layout is ready
             Dispatcher.UIThread.Post(() => ScrollToSelected(), DispatcherPriority.Loaded);
         }
     }
@@ -100,9 +188,6 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
         }
     }
 
-    /// <summary>
-    /// Handles clicking on a game cover.
-    /// </summary>
     private void OnCoverClicked(object? sender, PointerPressedEventArgs e)
     {
         if (sender is Control c && c.DataContext is GameModel clickedGame)
@@ -114,7 +199,6 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
 
                 int clickedIndex = games.IndexOf(clickedGame);
 
-                // If already selected, open details
                 if (clickedIndex == _selectedIndex && viewModel.Parent.SelectedGame == clickedGame)
                 {
                     viewModel.Parent.OpenGameDetailsCommand.Execute(clickedGame);
@@ -122,7 +206,6 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
                 }
                 else
                 {
-                    // Select this game
                     _selectedIndex = clickedIndex;
                     viewModel.Parent.SelectedGame = clickedGame;
                     CurrentSelectedGame = clickedGame;
@@ -133,9 +216,6 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
         }
     }
 
-    /// <summary>
-    /// Handles keyboard actions.
-    /// </summary>
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
         if (DataContext is not CarouselViewModel viewModel) return;
@@ -183,10 +263,8 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
     {
         base.OnSizeChanged(e);
 
-        // Get the MainGrid and update row height dynamically
         if (this.FindControl<Grid>("MainGrid") is Grid mainGrid && mainGrid.RowDefinitions.Count > 0)
         {
-            // Calculate dynamic row height and margin based on window height
             double height = e.NewSize.Height;
             double minHeight = 500;
             double maxHeight = 1080;
@@ -194,29 +272,21 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
             double clampedHeight = Math.Clamp(height, minHeight, maxHeight);
             double ratio = (clampedHeight - minHeight) / (maxHeight - minHeight);
 
-            // Row height: 0px for small, 180px for large
             double rowHeight = 0 + (ratio * 180);
             mainGrid.RowDefinitions[0] = new RowDefinition(rowHeight, GridUnitType.Pixel);
 
-            // ScrollViewer negative margin: -80px for small, 0px for large
-            // This pulls games UP above the row boundary for small windows
             double scrollMargin = -90 + (ratio * 90);
             CarouselScroller.Margin = new Thickness(0, scrollMargin, 0, 15);
         }
 
-        // Force immediate recalculation by temporarily resetting offset
         CarouselScroller.Offset = new Vector(0, 0);
 
-        // Then recalculate and apply the correct offset
         Dispatcher.UIThread.Post(() =>
         {
             ScrollToSelected();
         }, DispatcherPriority.Render);
     }
 
-    /// <summary>
-    /// Centers the selected item within the ScrollViewer.
-    /// </summary>
     private void ScrollToSelected()
     {
         if (DataContext is not CarouselViewModel vm || vm.Games == null) return;
@@ -226,35 +296,25 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
 
         Dispatcher.UIThread.Post(() =>
         {
-            // Item dimensions - must match XAML exactly
             double itemWidth = 220;
-            double itemMargin = 10; // 5px on each side
-            double stackSpacing = 10; // From StackLayout Spacing property
-            double totalItemSpacing = itemMargin + stackSpacing; // Distance between item centers
+            double itemMargin = 10;
+            double stackSpacing = 10;
+            double totalItemSpacing = itemMargin + stackSpacing;
 
-            // The CenterPaddingConverter adds padding = (viewport/2 - itemWidth/2)
             double viewportWidth = CarouselScroller.Viewport.Width;
             double centerPadding = Math.Max(0, (viewportWidth / 2) - (itemWidth / 2));
 
-            // Position of the selected item's left edge (including padding)
             double itemLeftPosition = centerPadding + (_selectedIndex * (itemWidth + totalItemSpacing));
-
-            // Center of the selected item
             double itemCenterPosition = itemLeftPosition + (itemWidth / 2);
 
-            // We want the item center at the viewport center
             double viewportCenter = viewportWidth / 2;
             double targetOffset = itemCenterPosition - viewportCenter;
 
-            // Apply with bounds checking
             CarouselScroller.Offset = new Vector(Math.Max(0, targetOffset), 0);
 
         }, DispatcherPriority.Background);
     }
 
-    /// <summary>
-    /// Handles the mouse wheel to navigate items.
-    /// </summary>
     private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
         if (DataContext is not CarouselViewModel viewModel) return;
@@ -277,5 +337,22 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
 
         e.Handled = true;
         CarouselScroller.Focus();
+    }
+
+    // Add these event handler methods to the CarouselView.axaml.cs file:
+
+    private void OnEffectToggleClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        ToggleEffectOverlay();
+    }
+
+    private void OnPreviousEffectClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        PreviousEffect();
+    }
+
+    private void OnNextEffectClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        NextEffect();
     }
 }

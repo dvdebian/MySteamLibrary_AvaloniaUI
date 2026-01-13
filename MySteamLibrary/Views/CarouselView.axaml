@@ -8,7 +8,8 @@
              xmlns:views="using:MySteamLibrary.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="MySteamLibrary.Views.CarouselView"
-             x:DataType="vm:CarouselViewModel">
+             x:DataType="vm:CarouselViewModel"
+             x:Name="RootCarouselView">
 
     <UserControl.Resources>
         <conv:BitmapValueConverter x:Key="VariableImageConverter"/>
@@ -39,9 +40,59 @@
             <Setter Property="BorderBrush" Value="#44FFFFFF"/>
             <Setter Property="Opacity" Value="1.0"/>
         </Style>
+
+        <!-- Effect Overlay Styles -->
+        <Style Selector="Button.EffectArrow">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button.EffectArrow:pointerover">
+            <Setter Property="Opacity" Value="0.7"/>
+        </Style>
+
+        <Style Selector="Button.EffectToggle">
+            <Setter Property="Background" Value="#1b2838"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#67c1f5"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button.EffectToggle:pointerover">
+            <Setter Property="Background" Value="#2a475e"/>
+            <Setter Property="BorderBrush" Value="#88d3ff"/>
+        </Style>
     </UserControl.Styles>
 
     <Grid x:Name="MainGrid" RowDefinitions="30, Auto, Auto">
+        <!-- Effect Toggle Button -->
+        <Button Classes="EffectToggle"
+                Grid.Row="0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Margin="0,0,20,0"
+                Content="EFFECT"
+                Click="OnEffectToggleClicked"/>
+
         <ScrollViewer x:Name="CarouselScroller"
                       Grid.Row="1"
                       Background="Transparent"
@@ -159,5 +210,74 @@
                        TextAlignment="Center"
                        LetterSpacing="2"/>
         </StackPanel>
+
+        <!-- Effect Selector Overlay -->
+        <Border Grid.Row="0" Grid.RowSpan="3"
+                Background="#CC000000"
+                IsVisible="{Binding IsEffectOverlayVisible, ElementName=RootCarouselView}"
+                IsHitTestVisible="{Binding IsEffectOverlayVisible, ElementName=RootCarouselView}">
+            
+            <Grid VerticalAlignment="Bottom" Margin="0,0,0,40">
+                <Border Background="#1b2838"
+                        CornerRadius="8"
+                        Padding="30,20"
+                        HorizontalAlignment="Center"
+                        BoxShadow="0 8 24 0 #AA000000">
+                    
+                    <StackPanel Spacing="15">
+                        <TextBlock Text="CAROUSEL EFFECT"
+                                   FontSize="13"
+                                   FontWeight="Bold"
+                                   Foreground="#67c1f5"
+                                   HorizontalAlignment="Center"
+                                   LetterSpacing="1"/>
+                        
+                        <Grid ColumnDefinitions="Auto,*,Auto" 
+                              Width="400"
+                              HorizontalAlignment="Center">
+                            
+                            <!-- Previous Button -->
+                            <Button Classes="EffectArrow"
+                                    Grid.Column="0"
+                                    Click="OnPreviousEffectClicked"
+                                    ToolTip.Tip="Previous Effect">
+                                <Path Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+                                      Fill="White"
+                                      Stretch="Uniform"
+                                      Width="24"/>
+                            </Button>
+
+                            <!-- Effect Name -->
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding CurrentEffectName, ElementName=RootCarouselView}"
+                                       FontSize="24"
+                                       FontWeight="ExtraBold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       LetterSpacing="2"/>
+
+                            <!-- Next Button -->
+                            <Button Classes="EffectArrow"
+                                    Grid.Column="2"
+                                    Click="OnNextEffectClicked"
+                                    ToolTip.Tip="Next Effect">
+                                <Path Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+                                      Fill="White"
+                                      Stretch="Uniform"
+                                      Width="24"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- Close Button -->
+                        <Button Content="CLOSE"
+                                HorizontalAlignment="Center"
+                                Classes="EffectToggle"
+                                Click="OnEffectToggleClicked"
+                                Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>
