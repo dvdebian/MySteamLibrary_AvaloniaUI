@@ -125,7 +125,11 @@
                                             VerticalAlignment="Center"
                                             CornerRadius="12" 
                                             ClipToBounds="False" 
-                                            PointerPressed="OnCoverClicked">
+                                            PointerPressed="OnCoverClicked"
+                                            BoxShadow="0 15 35 5 #AA000000, 0 5 15 3 #6667c1f5"
+                                            BorderBrush="#3367c1f5"
+                                            BorderThickness="2"
+                                            Opacity="0.75">
                                         
                                         <Border.RenderTransformOrigin>50%,50%</Border.RenderTransformOrigin>
                                         
@@ -141,6 +145,9 @@
                                         <Border.Transitions>
                                             <Transitions>
                                                 <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+                                                <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.3"/>
+                                                <BrushTransition Property="BorderBrush" Duration="0:0:0.3"/>
+                                                <DoubleTransition Property="Opacity" Duration="0:0:0.3"/>
                                             </Transitions>
                                         </Border.Transitions>
 
