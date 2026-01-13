@@ -11,12 +11,13 @@ namespace MySteamLibrary.Services
 {
     /// <summary>
     /// Handles local storage of game metadata and images to reduce API calls.
+    /// Now stores cache in a more user-friendly location.
     /// </summary>
     public class CacheService
     {
-        // Define paths for the cache folder and the metadata file
-        private readonly string _cacheFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cache");
-        private readonly string _metadataFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cache", "library_cache.json");
+        // Use AppData/Local for cache - this is the Windows standard location
+        private readonly string _cacheFolder;
+        private readonly string _metadataFile;
         private readonly HttpClient _httpClient;
 
         // Semaphore to ensure only one thread writes to the JSON file at a time
@@ -26,10 +27,85 @@ namespace MySteamLibrary.Services
         {
             _httpClient = new HttpClient();
 
+            // OPTION 1: Use AppData/Local (RECOMMENDED - Windows Standard)
+            // This is where most apps store their cache data
+            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            _cacheFolder = Path.Combine(appDataPath, "MySteamLibrary", "Cache");
+
+            // OPTION 2: Use Documents folder (MORE VISIBLE TO USER)
+            // Uncomment these lines if you want cache in Documents instead
+            // string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            // _cacheFolder = Path.Combine(documentsPath, "MySteamLibrary", "Cache");
+
+            // OPTION 3: Use executable location (ORIGINAL BEHAVIOR)
+            // Uncomment this if you prefer the old behavior
+            // _cacheFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cache");
+
+            _metadataFile = Path.Combine(_cacheFolder, "library_cache.json");
+
+            // LOG THE ACTUAL PATHS FOR DEBUGGING
+            System.Diagnostics.Debug.WriteLine("╔════════════════════════════════════════════════════════╗");
+            System.Diagnostics.Debug.WriteLine("║        CACHE SERVICE INITIALIZED                       ║");
+            System.Diagnostics.Debug.WriteLine("╚════════════════════════════════════════════════════════╝");
+            System.Diagnostics.Debug.WriteLine($"📁 Cache Folder: {_cacheFolder}");
+            System.Diagnostics.Debug.WriteLine($"📄 Metadata File: {_metadataFile}");
+            System.Diagnostics.Debug.WriteLine("");
+
             // Ensure the cache directory exists on startup
             if (!Directory.Exists(_cacheFolder))
             {
+                System.Diagnostics.Debug.WriteLine($"✨ Creating new cache directory...");
                 Directory.CreateDirectory(_cacheFolder);
+                System.Diagnostics.Debug.WriteLine($"✅ Cache directory created successfully");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"✅ Cache directory already exists");
+
+                // Show existing cache stats
+                if (File.Exists(_metadataFile))
+                {
+                    var fileInfo = new FileInfo(_metadataFile);
+                    System.Diagnostics.Debug.WriteLine($"📊 Existing cache file: {fileInfo.Length:N0} bytes");
+                    System.Diagnostics.Debug.WriteLine($"📅 Last modified: {fileInfo.LastWriteTime}");
+                }
+
+                // Count existing images
+                var imageFiles = Directory.GetFiles(_cacheFolder, "*_cover.jpg");
+                System.Diagnostics.Debug.WriteLine($"🖼️  Cached images: {imageFiles.Length}");
+            }
+            System.Diagnostics.Debug.WriteLine("");
+        }
+
+        /// <summary>
+        /// Returns the cache folder path for external diagnostics
+        /// </summary>
+        public string GetCacheFolder() => _cacheFolder;
+
+        /// <summary>
+        /// Returns the metadata file path for external diagnostics
+        /// </summary>
+        public string GetMetadataFile() => _metadataFile;
+
+        /// <summary>
+        /// Opens the cache folder in Windows Explorer
+        /// </summary>
+        public void OpenCacheFolderInExplorer()
+        {
+            try
+            {
+                if (Directory.Exists(_cacheFolder))
+                {
+                    System.Diagnostics.Process.Start("explorer.exe", _cacheFolder);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"⚠️ Cache folder doesn't exist yet: {_cacheFolder}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error opening cache folder: {ex.Message}");
             }
         }
 
@@ -38,16 +114,24 @@ namespace MySteamLibrary.Services
         /// </summary>
         public async Task SaveLibraryCacheAsync(List<GameModel> games)
         {
+            System.Diagnostics.Debug.WriteLine($"💾 Saving {games.Count} games to cache...");
+
             // Wait for our turn to access the file
             await _fileLock.WaitAsync();
             try
             {
                 var json = JsonSerializer.Serialize(games, new JsonSerializerOptions { WriteIndented = true });
                 await File.WriteAllTextAsync(_metadataFile, json);
+
+                var fileInfo = new FileInfo(_metadataFile);
+                System.Diagnostics.Debug.WriteLine($"✅ Cache saved successfully!");
+                System.Diagnostics.Debug.WriteLine($"   📊 {games.Count} games, {fileInfo.Length:N0} bytes");
+                System.Diagnostics.Debug.WriteLine($"   📁 {_metadataFile}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error saving cache: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"❌ ERROR saving cache: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"   Stack trace: {ex.StackTrace}");
             }
             finally
             {
@@ -61,17 +145,27 @@ namespace MySteamLibrary.Services
         /// </summary>
         public async Task<List<GameModel>> LoadLibraryCacheAsync()
         {
-            if (!File.Exists(_metadataFile)) return new List<GameModel>();
+            System.Diagnostics.Debug.WriteLine($"📂 Loading cache from: {_metadataFile}");
+
+            if (!File.Exists(_metadataFile))
+            {
+                System.Diagnostics.Debug.WriteLine($"ℹ️  No cache file found (this is normal on first run)");
+                return new List<GameModel>();
+            }
 
             // We also use the lock here to ensure we don't read while the file is being written
             await _fileLock.WaitAsync();
             try
             {
                 var json = await File.ReadAllTextAsync(_metadataFile);
-                return JsonSerializer.Deserialize<List<GameModel>>(json) ?? new List<GameModel>();
+                var games = JsonSerializer.Deserialize<List<GameModel>>(json) ?? new List<GameModel>();
+
+                System.Diagnostics.Debug.WriteLine($"✅ Loaded {games.Count} games from cache");
+                return games;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"❌ ERROR loading cache: {ex.Message}");
                 return new List<GameModel>();
             }
             finally
@@ -96,15 +190,51 @@ namespace MySteamLibrary.Services
 
             try
             {
+                System.Diagnostics.Debug.WriteLine($"⬇️  Downloading image: AppId {appId}");
+
                 // Download the image data from Steam's CDN
                 var imageData = await _httpClient.GetByteArrayAsync(remoteUrl);
                 await File.WriteAllBytesAsync(localPath, imageData);
+
+                System.Diagnostics.Debug.WriteLine($"✅ Image saved: {imageData.Length:N0} bytes");
                 return localPath;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️  Failed to download image for AppId {appId}: {ex.Message}");
+                // Return the remote URL as a fallback if download fails
+                return remoteUrl;
+            }
+        }
+
+        /// <summary>
+        /// Gets cache statistics for display
+        /// </summary>
+        public (int imageCount, long totalSize) GetCacheStats()
+        {
+            try
+            {
+                if (!Directory.Exists(_cacheFolder))
+                    return (0, 0);
+
+                var files = Directory.GetFiles(_cacheFolder);
+                int imageCount = 0;
+                long totalSize = 0;
+
+                foreach (var file in files)
+                {
+                    var info = new FileInfo(file);
+                    totalSize += info.Length;
+
+                    if (file.EndsWith("_cover.jpg"))
+                        imageCount++;
+                }
+
+                return (imageCount, totalSize);
             }
             catch
             {
-                // Return the remote URL as a fallback if download fails
-                return remoteUrl;
+                return (0, 0);
             }
         }
     }

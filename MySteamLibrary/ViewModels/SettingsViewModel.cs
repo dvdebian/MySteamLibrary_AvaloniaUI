@@ -16,9 +16,15 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly string _settingsFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.json");
     private readonly string _cacheFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cache");
 
+    // Reference to CacheService for cache management operations
+    private Services.CacheService? _cacheService;
+
     // A delegate (callback) that the MainViewModel will provide.
     // This allows this ViewModel to request a close without knowing about MainViewModel.
     public Action? RequestClose { get; set; }
+
+    [ObservableProperty]
+    private string _cacheInfo = "Loading cache info...";
 
     // The Steam Web API Key required to fetch user data.
     [ObservableProperty]
@@ -36,6 +42,45 @@ public partial class SettingsViewModel : ViewModelBase
     {
         // Load settings from disk on startup
         _ = LoadSettingsAsync();
+
+        // Initialize cache service and update info
+        UpdateCacheInfo();
+    }
+
+    /// <summary>
+    /// Sets the cache service reference and updates cache info
+    /// </summary>
+    public void SetCacheService(Services.CacheService cacheService)
+    {
+        _cacheService = cacheService;
+        UpdateCacheInfo();
+    }
+
+    /// <summary>
+    /// Updates the cache information display
+    /// </summary>
+    private void UpdateCacheInfo()
+    {
+        if (_cacheService == null)
+        {
+            CacheInfo = "Cache service not initialized";
+            return;
+        }
+
+        try
+        {
+            var (imageCount, totalSize) = _cacheService.GetCacheStats();
+            double sizeMB = totalSize / (1024.0 * 1024.0);
+
+            string cacheFolder = _cacheService.GetCacheFolder();
+            CacheInfo = $"Location: {cacheFolder}\n" +
+                       $"Images: {imageCount}\n" +
+                       $"Total Size: {sizeMB:F2} MB";
+        }
+        catch
+        {
+            CacheInfo = "Unable to get cache information";
+        }
     }
 
     /// <summary>
@@ -99,6 +144,15 @@ public partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Opens the cache folder in Windows Explorer
+    /// </summary>
+    [RelayCommand]
+    private void OpenCacheFolder()
+    {
+        _cacheService?.OpenCacheFolderInExplorer();
+    }
+
+    /// <summary>
     /// Clears all user data: settings, cache, and images.
     /// </summary>
     [RelayCommand]
@@ -117,12 +171,14 @@ public partial class SettingsViewModel : ViewModelBase
             }
 
             // Delete the entire cache folder (includes library_cache.json and all images)
-            if (Directory.Exists(_cacheFolder))
+            string cacheFolder = _cacheService?.GetCacheFolder() ?? _cacheFolder;
+            if (Directory.Exists(cacheFolder))
             {
-                Directory.Delete(_cacheFolder, recursive: true);
+                Directory.Delete(cacheFolder, recursive: true);
             }
 
             System.Diagnostics.Debug.WriteLine("All data cleared successfully.");
+            UpdateCacheInfo();
         }
         catch (Exception ex)
         {
@@ -130,16 +186,6 @@ public partial class SettingsViewModel : ViewModelBase
         }
 
         await Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Triggered by the Cancel button in the UI.
-    /// Closes without saving.
-    /// </summary>
-    [RelayCommand]
-    private async Task Cancel()
-    {
-        RequestClose?.Invoke();
     }
 
     /// <summary>

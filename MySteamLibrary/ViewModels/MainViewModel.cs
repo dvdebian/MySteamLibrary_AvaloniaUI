@@ -99,6 +99,9 @@ public partial class MainViewModel : ViewModelBase
         // Initialize SteamApiService with the Settings reference
         _steamService = new SteamApiService(Settings);
 
+        // Pass the cache service to Settings so it can display cache info
+        Settings.SetCacheService(_cacheService);
+
         // Initialize sub-viewmodels and pass 'this' as the Parent.
         // This allows sub-views to access Parent.SelectedGame for global syncing.
         _listView = new ListViewModel { Games = _allGames, Parent = this };
