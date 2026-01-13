@@ -133,6 +133,16 @@ public partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Triggered by the Cancel button in the UI.
+    /// Closes without saving.
+    /// </summary>
+    [RelayCommand]
+    private async Task Cancel()
+    {
+        RequestClose?.Invoke();
+    }
+
+    /// <summary>
     /// Returns the current API Key. Used by SteamApiService.
     /// </summary>
     public string GetApiKey() => SteamApiKey;

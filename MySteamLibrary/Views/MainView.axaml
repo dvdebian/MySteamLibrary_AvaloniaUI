@@ -84,6 +84,19 @@
                          Background="#101a24"
                          BorderThickness="0"
                          CornerRadius="2"/>
+                
+                <!-- Error Message Display -->
+                <Border Background="#c23616" 
+                        Padding="12,8" 
+                        CornerRadius="4"
+                        MaxWidth="600"
+                        HorizontalAlignment="Left"
+                        IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <TextBlock Text="{Binding ErrorMessage}" 
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap"/>
+                </Border>
             </StackPanel>
         </Border>
 

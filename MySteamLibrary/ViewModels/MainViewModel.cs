@@ -61,6 +61,10 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private string _searchText = string.Empty;
 
+    // Error message to display when operations fail or credentials are missing
+    [ObservableProperty]
+    private string _errorMessage = string.Empty;
+
     // The user's preferred sorting method
     [ObservableProperty]
     private SortCriteria _currentSortMode = SortCriteria.Alphabetical;
@@ -206,9 +210,18 @@ public partial class MainViewModel : ViewModelBase
     {
         if (IsRefreshing) return;
 
+        // Validate that Steam credentials are configured
+        if (string.IsNullOrWhiteSpace(Settings.GetApiKey()) || string.IsNullOrWhiteSpace(Settings.GetSteamId()))
+        {
+            ErrorMessage = "Steam API Key and Steam ID are required. Please update them in Settings before refreshing.";
+            return;
+        }
+
         try
         {
             IsRefreshing = true;
+            ErrorMessage = string.Empty; // Clear any previous error messages
+
             var freshGames = await _steamService.GetLibrarySkeletonAsync();
 
             if (freshGames != null && freshGames.Any())
@@ -225,6 +238,7 @@ public partial class MainViewModel : ViewModelBase
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error during refresh: {ex.Message}");
+            ErrorMessage = $"Failed to refresh library: {ex.Message}";
         }
         finally
         {
