@@ -81,6 +81,18 @@ public partial class GameDetailsViewModel : ViewModelBase
         {
             System.Diagnostics.Debug.WriteLine($"✅ Custom image set successfully for {SelectedGame.Title}");
 
+            // CRITICAL: Force image reload by temporarily clearing the path
+            // This is necessary because Avalonia's Bitmap caches images by path
+            // Even though the file content changed, the path is the same, so UI won't reload
+            string newImagePath = SelectedGame.ImagePath;
+            SelectedGame.ImagePath = string.Empty;  // Clear to force unload
+
+            // Small delay to ensure UI processes the empty path
+            await Task.Delay(10);
+
+            // Set the path back to trigger reload with new image content
+            SelectedGame.ImagePath = newImagePath;
+
             // Notify that the image changed so cache can be saved
             if (OnImageChanged != null)
             {
@@ -97,23 +109,42 @@ public partial class GameDetailsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Removes the custom image and reverts to attempting Steam CDN download or placeholder.
+    /// Removes the cached image and attempts to re-download from Steam CDN.
     /// </summary>
     [RelayCommand]
     private async Task RemoveCustomImage()
     {
-        if (SelectedGame == null || _customImageService == null)
+        if (SelectedGame == null || _customImageService == null || _cacheService == null)
             return;
 
-        System.Diagnostics.Debug.WriteLine($"🗑️  Removing custom image for: {SelectedGame.Title}");
+        System.Diagnostics.Debug.WriteLine($"🔄 Refreshing image for: {SelectedGame.Title}");
 
-        bool success = await _customImageService.RemoveCustomImageAsync(SelectedGame);
+        // Step 1: Remove the cached image file
+        bool removed = await _customImageService.RemoveCustomImageAsync(SelectedGame);
 
-        if (success)
+        if (removed)
         {
-            System.Diagnostics.Debug.WriteLine($"✅ Custom image removed for {SelectedGame.Title}");
+            System.Diagnostics.Debug.WriteLine($"✅ Cached image removed for {SelectedGame.Title}");
 
-            // Notify that the image changed
+            // Step 2: Attempt to re-download from Steam CDN
+            System.Diagnostics.Debug.WriteLine($"⬇️  Attempting to re-download from Steam CDN...");
+
+            string remoteUrl = $"https://cdn.akamai.steamstatic.com/steam/apps/{SelectedGame.AppId}/library_600x900_2x.jpg";
+            string newImagePath = await _cacheService.GetOrDownloadImageAsync(SelectedGame.AppId, remoteUrl);
+
+            // Update the game's image path
+            SelectedGame.ImagePath = newImagePath;
+
+            if (!string.IsNullOrEmpty(newImagePath))
+            {
+                System.Diagnostics.Debug.WriteLine($"✅ Image re-downloaded successfully from Steam CDN");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"ℹ️  No image available on Steam CDN, showing placeholder");
+            }
+
+            // Step 3: Save updated cache
             if (OnImageChanged != null)
             {
                 await OnImageChanged.Invoke();
@@ -121,22 +152,6 @@ public partial class GameDetailsViewModel : ViewModelBase
 
             // Force UI update
             OnPropertyChanged(nameof(SelectedGame));
-        }
-    }
-
-    /// <summary>
-    /// Returns true if the current game has a custom image set (file exists in cache).
-    /// Used to show/hide the "Remove Custom Image" button.
-    /// </summary>
-    public bool HasCustomImage
-    {
-        get
-        {
-            if (SelectedGame == null || string.IsNullOrEmpty(SelectedGame.ImagePath))
-                return false;
-
-            // Check if the image path points to an actual file in cache
-            return System.IO.File.Exists(SelectedGame.ImagePath);
         }
     }
 }

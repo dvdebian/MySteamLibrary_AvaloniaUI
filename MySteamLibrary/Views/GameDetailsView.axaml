@@ -96,6 +96,41 @@
                             </Style>
                         </Button.Styles>
                     </Button>
+                    
+                    <!-- Reset Button Overlay (Bottom-Right Corner) -->
+                    <!-- Refreshes the image by re-downloading from Steam CDN -->
+                    <Button Command="{Binding RemoveCustomImageCommand}"
+                            ToolTip.Tip="Refresh image"
+                            Width="36"
+                            Height="36"
+                            CornerRadius="18"
+                            Background="#CC000000"
+                            BorderBrush="#f5a742"
+                            BorderThickness="1"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Margin="12"
+                            Padding="0"
+                            Cursor="Hand">
+                        
+                        <!-- Circular Arrow/Reset Icon (Unicode) -->
+                        <TextBlock Text="↻" 
+                                   FontSize="20"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                        
+                        <!-- Button Hover Effect -->
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="#DD000000"/>
+                                <Setter Property="BorderBrush" Value="#ffc266"/>
+                            </Style>
+                            <Style Selector="Button:pressed">
+                                <Setter Property="Background" Value="#EE000000"/>
+                            </Style>
+                        </Button.Styles>
+                    </Button>
                 </Grid>
 
                 <Grid Grid.Column="1" RowDefinitions="Auto, Auto, *">
