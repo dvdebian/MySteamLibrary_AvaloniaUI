@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Replace the beginning of MainViewModel.cs with this updated version:
+
+using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Linq;
@@ -28,7 +30,7 @@ public enum SortCriteria
 public partial class MainViewModel : ViewModelBase
 {
     // Business logic services
-    private readonly SteamApiService _steamService = new();
+    private readonly SteamApiService _steamService;
     private readonly CacheService _cacheService = new();
 
     // View instances held in memory to preserve state (like scroll position) when switching views
@@ -90,6 +92,9 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel()
     {
+        // Initialize SteamApiService with the Settings reference
+        _steamService = new SteamApiService(Settings);
+
         // Initialize sub-viewmodels and pass 'this' as the Parent.
         // This allows sub-views to access Parent.SelectedGame for global syncing.
         _listView = new ListViewModel { Games = _allGames, Parent = this };
@@ -106,6 +111,8 @@ public partial class MainViewModel : ViewModelBase
         // Load data from local disk immediately on startup
         _ = InitializeLibraryAsync();
     }
+
+    // ... rest of the MainViewModel code remains the same ...
 
     /// <summary>
     /// Automatically called by the CommunityToolkit whenever the SearchText property changes.
