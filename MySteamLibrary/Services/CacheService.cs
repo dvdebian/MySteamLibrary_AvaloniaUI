@@ -199,7 +199,8 @@ namespace MySteamLibrary.Services
 
         /// <summary>
         /// Downloads a game cover image and saves it locally. 
-        /// Returns the local file path.
+        /// Returns the local file path, or empty string if all downloads fail.
+        /// Tries multiple image URLs from Steam's CDN to find available images.
         /// </summary>
         public async Task<string> GetOrDownloadImageAsync(int appId, string remoteUrl)
         {
@@ -211,26 +212,59 @@ namespace MySteamLibrary.Services
                 return localPath;
             }
 
-            try
+            // CRITICAL: Ensure the cache directory exists before downloading
+            EnsureCacheDirectoryExists();
+
+            // Try multiple image sources in order of preference
+            var imageUrls = new[]
             {
-                System.Diagnostics.Debug.WriteLine($"⬇️  Downloading image: AppId {appId}");
+                remoteUrl, // Primary: library_600x900_2x.jpg
+                $"https://cdn.akamai.steamstatic.com/steam/apps/{appId}/library_600x900.jpg", // Alternative size
+                $"https://cdn.cloudflare.steamstatic.com/steam/apps/{appId}/library_600x900_2x.jpg", // Alternative CDN
+                $"https://cdn.akamai.steamstatic.com/steam/apps/{appId}/header.jpg", // Fallback: header image
+                $"https://steamcdn-a.akamaihd.net/steam/apps/{appId}/library_600x900_2x.jpg" // Legacy CDN
+            };
 
-                // CRITICAL: Ensure the cache directory exists before downloading
-                EnsureCacheDirectoryExists();
-
-                // Download the image data from Steam's CDN
-                var imageData = await _httpClient.GetByteArrayAsync(remoteUrl);
-                await File.WriteAllBytesAsync(localPath, imageData);
-
-                System.Diagnostics.Debug.WriteLine($"✅ Image saved: {imageData.Length:N0} bytes");
-                return localPath;
-            }
-            catch (Exception ex)
+            foreach (var url in imageUrls)
             {
-                System.Diagnostics.Debug.WriteLine($"⚠️  Failed to download image for AppId {appId}: {ex.Message}");
-                // Return the remote URL as a fallback if download fails
-                return remoteUrl;
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine($"⬇️  Trying to download image: AppId {appId} from {url}");
+
+                    // Download the image data from Steam's CDN
+                    var imageData = await _httpClient.GetByteArrayAsync(url);
+
+                    // Verify we got actual image data (not an error page)
+                    if (imageData.Length > 1000) // Minimum reasonable image size
+                    {
+                        await File.WriteAllBytesAsync(localPath, imageData);
+                        System.Diagnostics.Debug.WriteLine($"✅ Image saved: {imageData.Length:N0} bytes from {url}");
+                        return localPath;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"⚠️  Downloaded data too small ({imageData.Length} bytes), trying next URL...");
+                    }
+                }
+                catch (HttpRequestException httpEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"⚠️  HTTP error for AppId {appId}: {httpEx.Message}");
+                    // Continue to next URL
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"⚠️  Failed to download from {url}: {ex.Message}");
+                    // Continue to next URL
+                }
             }
+
+            // All download attempts failed
+            System.Diagnostics.Debug.WriteLine($"❌ All image download attempts failed for AppId {appId}");
+            System.Diagnostics.Debug.WriteLine($"   Game will display with placeholder image");
+
+            // Return empty string so BitmapValueConverter immediately shows placeholder
+            // This avoids repeated network requests and improves performance
+            return string.Empty;
         }
 
         /// <summary>
