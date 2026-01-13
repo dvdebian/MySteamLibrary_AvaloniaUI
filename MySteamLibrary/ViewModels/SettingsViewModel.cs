@@ -19,6 +19,9 @@ public partial class SettingsViewModel : ViewModelBase
     // Reference to CacheService for cache management operations
     private Services.CacheService? _cacheService;
 
+    // Reference to MainViewModel to clear data from memory
+    private MainViewModel? _mainViewModel;
+
     // A delegate (callback) that the MainViewModel will provide.
     // This allows this ViewModel to request a close without knowing about MainViewModel.
     public Action? RequestClose { get; set; }
@@ -54,6 +57,14 @@ public partial class SettingsViewModel : ViewModelBase
     {
         _cacheService = cacheService;
         UpdateCacheInfo();
+    }
+
+    /// <summary>
+    /// Sets the MainViewModel reference for clearing data
+    /// </summary>
+    public void SetMainViewModel(MainViewModel mainViewModel)
+    {
+        _mainViewModel = mainViewModel;
     }
 
     /// <summary>
@@ -177,12 +188,15 @@ public partial class SettingsViewModel : ViewModelBase
                 Directory.Delete(cacheFolder, recursive: true);
             }
 
-            System.Diagnostics.Debug.WriteLine("All data cleared successfully.");
+            // Clear all game data from MainViewModel
+            _mainViewModel?.ClearAllData();
+
+            System.Diagnostics.Debug.WriteLine("✅ All data cleared successfully.");
             UpdateCacheInfo();
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error clearing data: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"❌ Error clearing data: {ex.Message}");
         }
 
         await Task.CompletedTask;

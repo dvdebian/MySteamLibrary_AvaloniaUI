@@ -88,6 +88,12 @@ public partial class MainViewModel : ViewModelBase
     /// </summary>
     public bool IsCarouselMode => ActiveView == _carouselView;
 
+    /// <summary>
+    /// Returns true when there are no games in the library.
+    /// Used to show the "No data found" message.
+    /// </summary>
+    public bool HasNoData => _allGames.Count == 0;
+
     // The collection bound to all UI views (List, Grid, etc.)
     private readonly ObservableCollection<GameModel> _allGames = new();
 
@@ -101,6 +107,9 @@ public partial class MainViewModel : ViewModelBase
 
         // Pass the cache service to Settings so it can display cache info
         Settings.SetCacheService(_cacheService);
+
+        // Pass this MainViewModel to Settings so it can clear data
+        Settings.SetMainViewModel(this);
 
         // Initialize sub-viewmodels and pass 'this' as the Parent.
         // This allows sub-views to access Parent.SelectedGame for global syncing.
@@ -187,6 +196,10 @@ public partial class MainViewModel : ViewModelBase
         {
             _allGames.Add(game);
         }
+
+        // Notify UI that HasNoData property may have changed
+        OnPropertyChanged(nameof(HasNoData));
+
         // NEW STEP 4: Auto-Selection for Centered Views
         // If we are in a mode that relies on centering, we MUST ensure the first
         // game is selected after a filter, otherwise the carousel stays empty or off-center.
@@ -203,6 +216,7 @@ public partial class MainViewModel : ViewModelBase
             }
         }
     }
+    
 
     /// <summary>
     /// Fetches fresh data from Steam API. 
@@ -315,5 +329,18 @@ public partial class MainViewModel : ViewModelBase
     {
         CurrentSortMode = newCriteria;
         ApplyFilteringAndSorting();
+    }
+
+    /// <summary>
+    /// Clears all game data from memory.
+    /// Called by SettingsViewModel after clearing cache files.
+    /// </summary>
+    public void ClearAllData()
+    {
+        _masterLibrary.Clear();
+        _allGames.Clear();
+        SelectedGame = null;
+        OnPropertyChanged(nameof(HasNoData));
+        System.Diagnostics.Debug.WriteLine("All game data cleared from memory");
     }
 }

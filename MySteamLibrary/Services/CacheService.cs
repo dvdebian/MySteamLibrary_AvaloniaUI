@@ -52,15 +52,24 @@ namespace MySteamLibrary.Services
             System.Diagnostics.Debug.WriteLine("");
 
             // Ensure the cache directory exists on startup
+            EnsureCacheDirectoryExists();
+        }
+
+        /// <summary>
+        /// Ensures the cache directory exists, creating it if necessary.
+        /// This is called both on initialization and before any write operation.
+        /// </summary>
+        private void EnsureCacheDirectoryExists()
+        {
             if (!Directory.Exists(_cacheFolder))
             {
-                System.Diagnostics.Debug.WriteLine($"✨ Creating new cache directory...");
+                System.Diagnostics.Debug.WriteLine($"✨ Creating cache directory: {_cacheFolder}");
                 Directory.CreateDirectory(_cacheFolder);
                 System.Diagnostics.Debug.WriteLine($"✅ Cache directory created successfully");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"✅ Cache directory already exists");
+                System.Diagnostics.Debug.WriteLine($"✅ Cache directory exists");
 
                 // Show existing cache stats
                 if (File.Exists(_metadataFile))
@@ -71,8 +80,15 @@ namespace MySteamLibrary.Services
                 }
 
                 // Count existing images
-                var imageFiles = Directory.GetFiles(_cacheFolder, "*_cover.jpg");
-                System.Diagnostics.Debug.WriteLine($"🖼️  Cached images: {imageFiles.Length}");
+                try
+                {
+                    var imageFiles = Directory.GetFiles(_cacheFolder, "*_cover.jpg");
+                    System.Diagnostics.Debug.WriteLine($"🖼️  Cached images: {imageFiles.Length}");
+                }
+                catch
+                {
+                    // Ignore errors when counting files
+                }
             }
             System.Diagnostics.Debug.WriteLine("");
         }
@@ -94,13 +110,16 @@ namespace MySteamLibrary.Services
         {
             try
             {
+                // Ensure folder exists before trying to open it
+                EnsureCacheDirectoryExists();
+
                 if (Directory.Exists(_cacheFolder))
                 {
                     System.Diagnostics.Process.Start("explorer.exe", _cacheFolder);
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"⚠️ Cache folder doesn't exist yet: {_cacheFolder}");
+                    System.Diagnostics.Debug.WriteLine($"⚠️ Cache folder doesn't exist: {_cacheFolder}");
                 }
             }
             catch (Exception ex)
@@ -115,6 +134,10 @@ namespace MySteamLibrary.Services
         public async Task SaveLibraryCacheAsync(List<GameModel> games)
         {
             System.Diagnostics.Debug.WriteLine($"💾 Saving {games.Count} games to cache...");
+
+            // CRITICAL: Ensure the cache directory exists before saving
+            // This handles the case where the folder was deleted after initialization
+            EnsureCacheDirectoryExists();
 
             // Wait for our turn to access the file
             await _fileLock.WaitAsync();
@@ -191,6 +214,9 @@ namespace MySteamLibrary.Services
             try
             {
                 System.Diagnostics.Debug.WriteLine($"⬇️  Downloading image: AppId {appId}");
+
+                // CRITICAL: Ensure the cache directory exists before downloading
+                EnsureCacheDirectoryExists();
 
                 // Download the image data from Steam's CDN
                 var imageData = await _httpClient.GetByteArrayAsync(remoteUrl);

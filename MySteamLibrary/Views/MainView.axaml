@@ -100,7 +100,56 @@
             </StackPanel>
         </Border>
 
-        <ContentControl Grid.Row="1" Content="{Binding ActiveView}" />
+        <!-- Content Area -->
+        <Grid Grid.Row="1">
+            <!-- Show game views when data exists -->
+            <ContentControl Content="{Binding ActiveView}" IsVisible="{Binding !HasNoData}" />
+
+            <!-- Show "No data found" message when no games are loaded -->
+            <Border Background="{StaticResource SteamDarkBg}" 
+                    IsVisible="{Binding HasNoData}">
+                <StackPanel HorizontalAlignment="Center" 
+                            VerticalAlignment="Center" 
+                            Spacing="20">
+                    <TextBlock Text="📭" 
+                               FontSize="64" 
+                               HorizontalAlignment="Center"
+                               Opacity="0.5"/>
+                    <TextBlock Text="NO DATA FOUND" 
+                               FontSize="24" 
+                               FontWeight="Bold" 
+                               Foreground="#67c1f5"
+                               HorizontalAlignment="Center"
+                               LetterSpacing="2"/>
+                    <TextBlock Text="Please update the Settings and click Refresh to load your Steam library." 
+                               FontSize="14" 
+                               Foreground="#8395a7"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               MaxWidth="400"/>
+                    <Button Content="OPEN SETTINGS" 
+                            Command="{Binding ToggleSettingsCommand}"
+                            Background="#2a475e"
+                            Foreground="White"
+                            BorderBrush="#67c1f5"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="20,12"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Cursor="Hand"
+                            HorizontalAlignment="Center"
+                            Margin="0,10,0,0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="#3a5770"/>
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
 
         <Panel Grid.Row="0" Grid.RowSpan="2" IsVisible="{Binding IsSettingsOpen}">
             <views:SettingsView DataContext="{Binding Settings}" />
