@@ -51,15 +51,52 @@
             
             <Grid ColumnDefinitions="400, *">
                 
-                <Border Grid.Column="0" 
-                        CornerRadius="12,0,0,12" 
-                        ClipToBounds="True"
-                        Background="#101010">
-                    <Image Source="{Binding SelectedGame.ImagePath, Converter={StaticResource VariableImageConverter}}" 
-                           Stretch="UniformToFill"
-                           VerticalAlignment="Center"
-                           HorizontalAlignment="Center"/>
-                </Border>
+                <!-- Image Section with Overlay Edit Button -->
+                <Grid Grid.Column="0">
+                    <Border CornerRadius="12,0,0,12" 
+                            ClipToBounds="True"
+                            Background="#101010">
+                        <Image Source="{Binding SelectedGame.ImagePath, Converter={StaticResource VariableImageConverter}}" 
+                               Stretch="UniformToFill"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"/>
+                    </Border>
+                    
+                    <!-- Edit Button Overlay (Bottom-Left Corner) -->
+                    <Button Command="{Binding SetCustomImageCommand}"
+                            ToolTip.Tip="Change image"
+                            Width="36"
+                            Height="36"
+                            CornerRadius="18"
+                            Background="#CC000000"
+                            BorderBrush="#67c1f5"
+                            BorderThickness="1"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Bottom"
+                            Margin="12"
+                            Padding="0"
+                            Cursor="Hand">
+                        
+                        <!-- Pencil/Edit Icon (SVG Path) -->
+                        <Viewbox Width="16" Height="16">
+                            <Canvas Width="24" Height="24">
+                                <Path Data="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" 
+                                      Fill="White"/>
+                            </Canvas>
+                        </Viewbox>
+                        
+                        <!-- Button Hover Effect -->
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="#DD000000"/>
+                                <Setter Property="BorderBrush" Value="#8fdbff"/>
+                            </Style>
+                            <Style Selector="Button:pressed">
+                                <Setter Property="Background" Value="#EE000000"/>
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                </Grid>
 
                 <Grid Grid.Column="1" RowDefinitions="Auto, Auto, *">
                     

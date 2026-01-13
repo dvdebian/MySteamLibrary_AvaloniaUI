@@ -216,7 +216,7 @@ public partial class MainViewModel : ViewModelBase
             }
         }
     }
-    
+
 
     /// <summary>
     /// Fetches fresh data from Steam API. 
@@ -309,9 +309,31 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     public void OpenGameDetails(GameModel game)
     {
-        var detailsVm = new GameDetailsViewModel(game) { RequestClose = () => IsGameDetailsOpen = false };
+        var detailsVm = new GameDetailsViewModel(game, _cacheService)
+        {
+            RequestClose = () => IsGameDetailsOpen = false,
+            GetParentWindow = GetMainWindow,
+            OnImageChanged = async () =>
+            {
+                // Save the updated cache when image changes
+                await _cacheService.SaveLibraryCacheAsync(_masterLibrary);
+            }
+        };
         CurrentDetails = detailsVm;
         IsGameDetailsOpen = true;
+    }
+
+    /// <summary>
+    /// Gets the main application window for use in file picker dialogs.
+    /// </summary>
+    private Avalonia.Controls.Window? GetMainWindow()
+    {
+        // Get the main window from the application lifetime
+        if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            return desktop.MainWindow;
+        }
+        return null;
     }
 
     [RelayCommand]
