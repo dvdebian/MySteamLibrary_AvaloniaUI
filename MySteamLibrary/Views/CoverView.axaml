@@ -60,6 +60,23 @@
     </UserControl.Styles>
 
     <Grid RowDefinitions="1*, Auto, 1*">
+        <!-- Blurred Background -->
+        <Grid x:Name="BackgroundLayer" 
+              Grid.RowSpan="3" 
+              ClipToBounds="True">
+            <Image x:Name="BackgroundImage"
+                   Source="{Binding Parent.SelectedGame.ImagePath, Converter={StaticResource VariableImageConverter}}"
+                   Stretch="UniformToFill"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center">
+                <Image.Effect>
+                    <BlurEffect Radius="80"/>
+                </Image.Effect>
+            </Image>
+            <!-- Dark overlay for better readability -->
+            <Border Background="#AA000000"/>
+        </Grid>
+
         <ListBox x:Name="CoverList"
                  Grid.Row="1"
                  ItemsSource="{Binding Games}"
