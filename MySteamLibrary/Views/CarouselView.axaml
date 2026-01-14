@@ -8,7 +8,8 @@
              xmlns:views="using:MySteamLibrary.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="MySteamLibrary.Views.CarouselView"
-             x:DataType="vm:CoverViewModel">
+             x:DataType="vm:CarouselViewModel"
+             x:Name="RootCarouselView">
 
     <UserControl.Resources>
         <conv:BitmapValueConverter x:Key="VariableImageConverter"/>
@@ -19,39 +20,47 @@
     </UserControl.Resources>
 
     <UserControl.Styles>
-        <Style Selector="ItemsRepeater > ContentPresenter">
-            <Setter Property="ZIndex" Value="1"/>
-            <Setter Property="ClipToBounds" Value="False"/>
-        <!-- Styles for ItemsRepeater items (similar to ListBoxItem) -->
-        <Style Selector="Border.CarouselCard">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="ClipToBounds" Value="False"/>
-        </Style>
-
         <Style Selector="Border.CarouselCard Border#CardVisual">
-            <Setter Property="ZIndex" Value="100"/>
-        </Style>
-
-            <Setter Property="Opacity" Value="0.6"/>
-            <Setter Property="Transitions">
             <Setter Property="BoxShadow" Value="0 5 15 0 #88000000"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="Opacity" Value="0.6"/> <Setter Property="Transitions">
+            <Setter Property="Opacity" Value="0.6"/>
+            <Setter Property="Transitions">
                 <Transitions>
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.4" Easing="CircularEaseOut"/>
                     <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.25" Easing="CubicEaseOut"/>
                     <BrushTransition Property="BorderBrush" Duration="0:0:0.25"/>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.3"/>
+                </Transitions>
+            </Setter>
+        </Style>
 
         <Style Selector="Border.CarouselCard.Selected Border#CardVisual">
             <Setter Property="BoxShadow" Value="0 20 40 5 #AA000000"/>
             <Setter Property="BorderBrush" Value="#44FFFFFF"/>
             <Setter Property="Opacity" Value="1.0"/>
-            <Setter Property="ZIndex" Value="100"/>
         </Style>
-        
-        <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Grid RowDefinitions="*, Auto, Auto">
+
+        <!-- Effect Overlay Styles -->
+        <Style Selector="Button.EffectArrow">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button.EffectArrow:pointerover">
+            <Setter Property="Opacity" Value="0.7"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid x:Name="MainGrid" RowDefinitions="30, Auto, Auto">
         <ScrollViewer x:Name="CarouselScroller"
                       Grid.Row="1"
                       Background="Transparent"
@@ -61,13 +70,13 @@
                       Focusable="True"
                       ClipToBounds="False"
                       VerticalAlignment="Bottom"
-                      Margin="0,0,0,0">
+                      Margin="0">
 
             <ScrollViewer.Height>
                 <MultiBinding Converter="{StaticResource CarouselTransformConverter}" ConverterParameter="GetHeight">
                     <Binding Path="Bounds" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                    <Binding ElementName="CarouselScroller"/>
-                    <Binding ElementName="CarouselRepeater" Path="ItemsSource"/>
+                    <Binding Path="Parent.SelectedGame" />
+                    <Binding Path="Games"/>
                 </MultiBinding>
             </ScrollViewer.Height>
 
@@ -76,11 +85,11 @@
                     <VectorTransition Property="Offset" Duration="0:0:0.4" Easing="CubicEaseOut"/>
                 </Transitions>
             </ScrollViewer.Transitions>
-                                <Transitions>
+
             <Border Padding="{Binding Bounds.Width, 
                                RelativeSource={RelativeSource AncestorType=UserControl}, 
                                Converter={StaticResource CenterPaddingConverter}}"
-                    Margin="0,0,0,20"
+                    Margin="0"
                     VerticalAlignment="Center"
                     ClipToBounds="False">
 
@@ -108,7 +117,7 @@
                                         <Binding Path="CurrentSelectedGame" RelativeSource="{RelativeSource AncestorType=views:CarouselView}"/>
                                     </MultiBinding>
                                 </Border.ZIndex>
-                                            VerticalAlignment="Bottom"
+
                                 <Panel Width="220" Height="330" VerticalAlignment="Center" ClipToBounds="False">
                                     <Border Name="CardVisual"
                                             Width="220" Height="330" 
@@ -116,7 +125,11 @@
                                             VerticalAlignment="Center"
                                             CornerRadius="12" 
                                             ClipToBounds="False" 
-                                            PointerPressed="OnCoverClicked">
+                                            PointerPressed="OnCoverClicked"
+                                            BoxShadow="0 15 35 5 #AA000000, 0 5 15 3 #6667c1f5"
+                                            BorderBrush="#3367c1f5"
+                                            BorderThickness="2"
+                                            Opacity="0.75">
                                         
                                         <Border.RenderTransformOrigin>50%,50%</Border.RenderTransformOrigin>
                                         
@@ -132,6 +145,9 @@
                                         <Border.Transitions>
                                             <Transitions>
                                                 <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+                                                <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.3"/>
+                                                <BrushTransition Property="BorderBrush" Duration="0:0:0.3"/>
+                                                <DoubleTransition Property="Opacity" Duration="0:0:0.3"/>
                                             </Transitions>
                                         </Border.Transitions>
 
@@ -147,31 +163,104 @@
                 </ItemsRepeater>
             </Border>
         </ScrollViewer>
-                    </Panel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
 
         <StackPanel Grid.Row="2"
+                    VerticalAlignment="Top"
+                    Margin="0,0,0,30" 
+                    HorizontalAlignment="Center"
+                    Spacing="5" 
                     IsHitTestVisible="False"
                     DataContext="{Binding CurrentSelectedGame, RelativeSource={RelativeSource AncestorType=views:CarouselView}}">
-            
-            <TextBlock Text="{Binding Title}" 
-                    IsHitTestVisible="False"
-                    DataContext="{Binding Parent.SelectedGame}">
             
             <TextBlock Text="{Binding Title}" 
                        FontSize="32" 
                        FontWeight="ExtraBold"
                        Foreground="White"
                        TextAlignment="Center"/>
-
-            <TextBlock Text="{Binding $parent[Window].((vm:MainViewModel)DataContext).SelectedGame.PlayTime, StringFormat='{}{0} HOURS PLAYED'}" 
+            
+            <TextBlock Text="{Binding PlayTime, StringFormat='{}{0} HOURS PLAYED'}" 
                        FontSize="14" 
                        FontWeight="SemiBold"
                        Foreground="#99ffffff"
                        TextAlignment="Center"
                        LetterSpacing="2"/>
         </StackPanel>
+
+        <!-- Effect Selector Overlay -->
+        <Border Grid.Row="0" Grid.RowSpan="3"
+                Background="#CC000000"
+                IsVisible="{Binding IsEffectOverlayVisible, ElementName=RootCarouselView}"
+                IsHitTestVisible="{Binding IsEffectOverlayVisible, ElementName=RootCarouselView}">
+            
+            <Grid VerticalAlignment="Bottom" Margin="0,0,0,40">
+                <Border Background="#1b2838"
+                        CornerRadius="8"
+                        Padding="30,20"
+                        HorizontalAlignment="Center"
+                        BoxShadow="0 8 24 0 #AA000000">
+                    
+                    <StackPanel Spacing="15">
+                        <TextBlock Text="CAROUSEL EFFECT"
+                                   FontSize="13"
+                                   FontWeight="Bold"
+                                   Foreground="#67c1f5"
+                                   HorizontalAlignment="Center"
+                                   LetterSpacing="1"/>
+                        
+                        <Grid ColumnDefinitions="Auto,*,Auto" 
+                              Width="400"
+                              HorizontalAlignment="Center">
+                            
+                            <!-- Previous Button -->
+                            <Button Classes="EffectArrow"
+                                    Grid.Column="0"
+                                    Click="OnPreviousEffectClicked"
+                                    ToolTip.Tip="Previous Effect">
+                                <Path Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+                                      Fill="White"
+                                      Stretch="Uniform"
+                                      Width="24"/>
+                            </Button>
+
+                            <!-- Effect Name -->
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding CurrentEffectName, ElementName=RootCarouselView}"
+                                       FontSize="24"
+                                       FontWeight="ExtraBold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       LetterSpacing="2"/>
+
+                            <!-- Next Button -->
+                            <Button Classes="EffectArrow"
+                                    Grid.Column="2"
+                                    Click="OnNextEffectClicked"
+                                    ToolTip.Tip="Next Effect">
+                                <Path Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+                                      Fill="White"
+                                      Stretch="Uniform"
+                                      Width="24"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- Close Button -->
+                        <Button Content="CLOSE"
+                                HorizontalAlignment="Center"
+                                Padding="20,8"
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                Background="#2a475e"
+                                Foreground="White"
+                                BorderBrush="#67c1f5"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Cursor="Hand"
+                                Click="OnEffectToggleClicked"
+                                Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>

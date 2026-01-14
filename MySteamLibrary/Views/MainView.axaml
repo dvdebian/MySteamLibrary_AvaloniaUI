@@ -19,7 +19,7 @@
             <views:CoverView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:CarouselViewModel}">
-            <views:CarouselView />
+            <views:CarouselView x:Name="CarouselViewInstance"/>
         </DataTemplate>
     </UserControl.DataTemplates>
 
@@ -33,31 +33,49 @@
                            Foreground="White"
                            LetterSpacing="1"/>
                 
-                <StackPanel Orientation="Horizontal" Spacing="5">
-                    <Button Classes="Nav" Content="LIST" Command="{Binding SelectModeCommand}" CommandParameter="List" />
-                    <Button Classes="Nav" Content="GRID" Command="{Binding SelectModeCommand}" CommandParameter="Grid" />
-                    <Button Classes="Nav" Content="COVER" Command="{Binding SelectModeCommand}" CommandParameter="Cover" />
-                    <Button Classes="Nav" Content="CAROUSEL" Command="{Binding SelectModeCommand}" CommandParameter="Carousel" />
+                <Grid ColumnDefinitions="*, Auto">
                     
-                    <Separator Margin="10,0" Width="1" Background="#3d4450"/>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="5">
+                        <Button Classes="Nav" Content="LIST" Command="{Binding SelectModeCommand}" CommandParameter="List" />
+                        <Button Classes="Nav" Content="GRID" Command="{Binding SelectModeCommand}" CommandParameter="Grid" />
+                        <Button Classes="Nav" Content="COVER" Command="{Binding SelectModeCommand}" CommandParameter="Cover" />
+                        <Button Classes="Nav" Content="CAROUSEL" Command="{Binding SelectModeCommand}" CommandParameter="Carousel" />
+                        
+                        <!-- Effect Button (only visible in Carousel mode) -->
+                        <Button Classes="Nav" 
+                                Content="EFFECT" 
+                                Click="OnEffectButtonClicked"
+                                IsVisible="{Binding IsCarouselMode}"/>
+                    </StackPanel>
 
-                    <Button Classes="Nav" 
-                            Command="{Binding RefreshLibraryCommand}"
-                            IsEnabled="{Binding !IsRefreshing}">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="REFRESH" VerticalAlignment="Center"/>
-                            <ProgressBar IsIndeterminate="True" 
-                                         Width="50" 
-                                         Height="4"
-                                         VerticalAlignment="Center"
-                                         Foreground="#67c1f5"
-                                         Background="#3d4450"
-                                         IsVisible="{Binding IsRefreshing}" />
-                        </StackPanel>
-                    </Button>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                        
+                        <Button Classes="Nav" 
+                                Command="{Binding RefreshLibraryCommand}"
+                                IsEnabled="{Binding !IsRefreshing}"
+                                ToolTip.Tip="Refresh Library">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock Text="REFRESH" VerticalAlignment="Center"/>
+                                
+                                <ProgressBar IsIndeterminate="True" 
+                                             Width="30" Height="2"
+                                             Foreground="#67c1f5" 
+                                             Background="#3d4450"
+                                             VerticalAlignment="Center"
+                                             IsVisible="{Binding IsRefreshing}" />
+                            </StackPanel>
+                        </Button>
 
-                    <Button Classes="Nav" Content="SETTINGS" Command="{Binding ToggleSettingsCommand}" />
-                </StackPanel>
+                        <Button Classes="Nav" 
+                                Width="40" Height="40"
+                                Command="{Binding ToggleSettingsCommand}"
+                                ToolTip.Tip="Settings"
+                                Background="Transparent">
+                            <Path Data="M19.14,12.94c.04-.3,.06-.61,.06-.94c0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14,.23-.41,.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39,.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24,0-.43,.17-.47,.41l-.36,2.54c-.59,.24-1.13,.57-1.62,.94l-2.39-.96c-.22-.08-.47,0-.59,.22L3.31,8.87c-.12,.21-.08,.47,.12,.61l2.03,1.58c-.05,.3-.09,.63-.09,.94s.02,.64,.07,.94l-2.03,1.58c-.18,.14-.23,.41-.12,.61l1.92,3.32c.12,.22,.37,.29,.59,.22l2.39-.96c.5,.38,1.03,.7,1.62,.94l.36,2.54c.05,.24,.24,.41,.48,.41h3.84c.24,0,.44-.17,.47-.41l.36-2.54c.59-.24,1.13-.56,1.62-.94l2.39,.96c.22,.08,.47,0,.59-.22l1.92-3.32c.12-.21,.07-.47-.12-.61l-2.01-1.58ZM12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6s-1.62,3.6-3.6,3.6Z" 
+                                  Fill="White" Stretch="Uniform" Width="18" VerticalAlignment="Center"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
                 
                 <TextBox Watermark="SEARCH" 
                          Text="{Binding SearchText}" 
@@ -66,10 +84,72 @@
                          Background="#101a24"
                          BorderThickness="0"
                          CornerRadius="2"/>
+                
+                <!-- Error Message Display -->
+                <Border Background="#c23616" 
+                        Padding="12,8" 
+                        CornerRadius="4"
+                        MaxWidth="600"
+                        HorizontalAlignment="Left"
+                        IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <TextBlock Text="{Binding ErrorMessage}" 
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap"/>
+                </Border>
             </StackPanel>
         </Border>
 
-        <ContentControl Grid.Row="1" Content="{Binding ActiveView}" />
+        <!-- Content Area -->
+        <Grid Grid.Row="1">
+            <!-- Show game views when data exists -->
+            <ContentControl Content="{Binding ActiveView}" IsVisible="{Binding !HasNoData}" />
+
+            <!-- Show "No data found" message when no games are loaded -->
+            <Border Background="{StaticResource SteamDarkBg}" 
+                    IsVisible="{Binding HasNoData}">
+                <StackPanel HorizontalAlignment="Center" 
+                            VerticalAlignment="Center" 
+                            Spacing="20">
+                    <TextBlock Text="📭" 
+                               FontSize="64" 
+                               HorizontalAlignment="Center"
+                               Opacity="0.5"/>
+                    <TextBlock Text="NO DATA FOUND" 
+                               FontSize="24" 
+                               FontWeight="Bold" 
+                               Foreground="#67c1f5"
+                               HorizontalAlignment="Center"
+                               LetterSpacing="2"/>
+                    <TextBlock Text="Please update the Settings and click Refresh to load your Steam library." 
+                               FontSize="14" 
+                               Foreground="#8395a7"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               MaxWidth="400"/>
+                    <Button Content="OPEN SETTINGS" 
+                            Command="{Binding ToggleSettingsCommand}"
+                            Background="#2a475e"
+                            Foreground="White"
+                            BorderBrush="#67c1f5"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="20,12"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Cursor="Hand"
+                            HorizontalAlignment="Center"
+                            Margin="0,10,0,0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="#3a5770"/>
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
 
         <Panel Grid.Row="0" Grid.RowSpan="2" IsVisible="{Binding IsSettingsOpen}">
             <views:SettingsView DataContext="{Binding Settings}" />

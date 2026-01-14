@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Replace the beginning of MainViewModel.cs with this updated version:
+
+using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Linq;
@@ -28,7 +30,7 @@ public enum SortCriteria
 public partial class MainViewModel : ViewModelBase
 {
     // Business logic services
-    private readonly SteamApiService _steamService = new();
+    private readonly SteamApiService _steamService;
     private readonly CacheService _cacheService = new();
 
     // View instances held in memory to preserve state (like scroll position) when switching views
@@ -59,6 +61,10 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private string _searchText = string.Empty;
 
+    // Error message to display when operations fail or credentials are missing
+    [ObservableProperty]
+    private string _errorMessage = string.Empty;
+
     // The user's preferred sorting method
     [ObservableProperty]
     private SortCriteria _currentSortMode = SortCriteria.Alphabetical;
@@ -76,6 +82,18 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private GameModel? _selectedGame;
 
+    /// <summary>
+    /// Returns true if the current active view is the Carousel view.
+    /// Used to show/hide the Effect button in the UI.
+    /// </summary>
+    public bool IsCarouselMode => ActiveView == _carouselView;
+
+    /// <summary>
+    /// Returns true when there are no games in the library.
+    /// Used to show the "No data found" message.
+    /// </summary>
+    public bool HasNoData => _allGames.Count == 0;
+
     // The collection bound to all UI views (List, Grid, etc.)
     private readonly ObservableCollection<GameModel> _allGames = new();
 
@@ -84,6 +102,15 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel()
     {
+        // Initialize SteamApiService with the Settings reference
+        _steamService = new SteamApiService(Settings);
+
+        // Pass the cache service to Settings so it can display cache info
+        Settings.SetCacheService(_cacheService);
+
+        // Pass this MainViewModel to Settings so it can clear data
+        Settings.SetMainViewModel(this);
+
         // Initialize sub-viewmodels and pass 'this' as the Parent.
         // This allows sub-views to access Parent.SelectedGame for global syncing.
         _listView = new ListViewModel { Games = _allGames, Parent = this };
@@ -101,6 +128,8 @@ public partial class MainViewModel : ViewModelBase
         _ = InitializeLibraryAsync();
     }
 
+    // ... rest of the MainViewModel code remains the same ...
+
     /// <summary>
     /// Automatically called by the CommunityToolkit whenever the SearchText property changes.
     /// Triggers the filtering logic to update the UI in real-time.
@@ -108,6 +137,14 @@ public partial class MainViewModel : ViewModelBase
     partial void OnSearchTextChanged(string value)
     {
         ApplyFilteringAndSorting();
+    }
+
+    /// <summary>
+    /// Called automatically when ActiveView changes to notify UI about IsCarouselMode.
+    /// </summary>
+    partial void OnActiveViewChanged(LibraryPresenterViewModel value)
+    {
+        OnPropertyChanged(nameof(IsCarouselMode));
     }
 
     /// <summary>
@@ -159,6 +196,10 @@ public partial class MainViewModel : ViewModelBase
         {
             _allGames.Add(game);
         }
+
+        // Notify UI that HasNoData property may have changed
+        OnPropertyChanged(nameof(HasNoData));
+
         // NEW STEP 4: Auto-Selection for Centered Views
         // If we are in a mode that relies on centering, we MUST ensure the first
         // game is selected after a filter, otherwise the carousel stays empty or off-center.
@@ -176,6 +217,7 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
+
     /// <summary>
     /// Fetches fresh data from Steam API. 
     /// Updates the Master list first, then triggers the UI update.
@@ -185,9 +227,18 @@ public partial class MainViewModel : ViewModelBase
     {
         if (IsRefreshing) return;
 
+        // Validate that Steam credentials are configured
+        if (string.IsNullOrWhiteSpace(Settings.GetApiKey()) || string.IsNullOrWhiteSpace(Settings.GetSteamId()))
+        {
+            ErrorMessage = "Steam API Key and Steam ID are required. Please update them in Settings before refreshing.";
+            return;
+        }
+
         try
         {
             IsRefreshing = true;
+            ErrorMessage = string.Empty; // Clear any previous error messages
+
             var freshGames = await _steamService.GetLibrarySkeletonAsync();
 
             if (freshGames != null && freshGames.Any())
@@ -204,6 +255,7 @@ public partial class MainViewModel : ViewModelBase
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error during refresh: {ex.Message}");
+            ErrorMessage = $"Failed to refresh library: {ex.Message}";
         }
         finally
         {
@@ -257,9 +309,31 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     public void OpenGameDetails(GameModel game)
     {
-        var detailsVm = new GameDetailsViewModel(game) { RequestClose = () => IsGameDetailsOpen = false };
+        var detailsVm = new GameDetailsViewModel(game, _cacheService)
+        {
+            RequestClose = () => IsGameDetailsOpen = false,
+            GetParentWindow = GetMainWindow,
+            OnImageChanged = async () =>
+            {
+                // Save the updated cache when image changes
+                await _cacheService.SaveLibraryCacheAsync(_masterLibrary);
+            }
+        };
         CurrentDetails = detailsVm;
         IsGameDetailsOpen = true;
+    }
+
+    /// <summary>
+    /// Gets the main application window for use in file picker dialogs.
+    /// </summary>
+    private Avalonia.Controls.Window? GetMainWindow()
+    {
+        // Get the main window from the application lifetime
+        if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            return desktop.MainWindow;
+        }
+        return null;
     }
 
     [RelayCommand]
@@ -277,5 +351,18 @@ public partial class MainViewModel : ViewModelBase
     {
         CurrentSortMode = newCriteria;
         ApplyFilteringAndSorting();
+    }
+
+    /// <summary>
+    /// Clears all game data from memory.
+    /// Called by SettingsViewModel after clearing cache files.
+    /// </summary>
+    public void ClearAllData()
+    {
+        _masterLibrary.Clear();
+        _allGames.Clear();
+        SelectedGame = null;
+        OnPropertyChanged(nameof(HasNoData));
+        System.Diagnostics.Debug.WriteLine("All game data cleared from memory");
     }
 }

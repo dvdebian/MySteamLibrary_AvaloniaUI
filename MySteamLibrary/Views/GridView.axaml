@@ -39,7 +39,7 @@
         </Style>
     </UserControl.Styles>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" ClipToBounds="False">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
         <controls:ItemsRepeater ItemsSource="{Binding Games}" Margin="20" ClipToBounds="False">
             <controls:ItemsRepeater.Layout>
                 <UniformGridLayout ItemsJustification="Center" 

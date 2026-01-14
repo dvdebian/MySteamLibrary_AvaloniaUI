@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:MySteamLibrary.ViewModels"
              x:Class="MySteamLibrary.Views.SettingsView"
@@ -11,23 +11,139 @@
                 Padding="20" 
                 HorizontalAlignment="Center" 
                 VerticalAlignment="Center"
-                Width="400"
-                BoxShadow="0 10 30 5 Black"> <StackPanel Spacing="15">
-                <TextBlock Text="SETTINGS" FontSize="18" FontWeight="Bold" />
+                Width="450"
+                BoxShadow="0 10 30 5 Black">
+            <StackPanel Spacing="15">
+                <TextBlock Text="SETTINGS" 
+                           FontSize="18" 
+                           FontWeight="Bold" 
+                           Foreground="White"
+                           Margin="0,0,0,5"/>
                 
                 <StackPanel Spacing="5">
-                    <TextBlock Text="Steam API Key:" FontSize="12" Opacity="0.6"/>
-                    <TextBox Text="{Binding SteamApiKey}" />
+                    <TextBlock Text="Steam API Key:" 
+                               FontSize="12" 
+                               Foreground="#99ffffff"
+                               FontWeight="SemiBold"/>
+                    <TextBox Text="{Binding SteamApiKey}" 
+                             Watermark="Enter your Steam API Key"
+                             Background="#101a24"
+                             Foreground="White"
+                             BorderBrush="#2a475e"
+                             BorderThickness="1"
+                             CornerRadius="4"
+                             Padding="8"/>
+                    <TextBlock Text="Get your API key from: https://steamcommunity.com/dev/apikey" 
+                               FontSize="10" 
+                               Foreground="#67c1f5"
+                               TextWrapping="Wrap"
+                               Margin="0,2,0,0"/>
                 </StackPanel>
 
                 <StackPanel Spacing="5">
-                    <TextBlock Text="Steam ID:" FontSize="12" Opacity="0.6"/>
-                    <TextBox Text="{Binding SteamId}" />
+                    <TextBlock Text="Steam ID:" 
+                               FontSize="12" 
+                               Foreground="#99ffffff"
+                               FontWeight="SemiBold"/>
+                    <TextBox Text="{Binding SteamId}" 
+                             Watermark="Enter your Steam ID (64-bit)"
+                             Background="#101a24"
+                             Foreground="White"
+                             BorderBrush="#2a475e"
+                             BorderThickness="1"
+                             CornerRadius="4"
+                             Padding="8"/>
+                    <TextBlock Text="Find your Steam ID at: https://steamid.io" 
+                               FontSize="10" 
+                               Foreground="#67c1f5"
+                               Margin="0,2,0,0"/>
                 </StackPanel>
 
-                <Button Content="CLOSE" 
-                        Command="{Binding CloseCommand}"
-                        Margin="0,10,0,0"/>
+
+                <!-- Cache Information Section -->
+                <StackPanel Spacing="5" Margin="0,10,0,0">
+                    <TextBlock Text="Cache Information:" 
+                               FontSize="12" 
+                               Foreground="#99ffffff"
+                               FontWeight="SemiBold"/>
+                    <Border Background="#101a24"
+                            BorderBrush="#2a475e"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="10">
+                        <TextBlock Text="{Binding CacheInfo}" 
+                                   FontSize="11" 
+                                   Foreground="#c8d6e5"
+                                   FontFamily="Consolas"
+                                   TextWrapping="Wrap"/>
+                    </Border>
+                    <Button Content="📁 OPEN CACHE FOLDER" 
+                            Command="{Binding OpenCacheFolderCommand}"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Background="#2a475e"
+                            Foreground="White"
+                            BorderThickness="0"
+                            CornerRadius="4"
+                            Padding="0,8"
+                            FontSize="11"
+                            FontWeight="SemiBold"
+                            Cursor="Hand"
+                            Margin="0,5,0,0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="#3a5770"/>
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+
+                </StackPanel>
+
+                <Grid ColumnDefinitions="*,*" 
+                      Margin="0,10,0,0"
+                      ColumnSpacing="10">
+                    
+                    <Button Grid.Column="0"
+                            Content="CLEAR DATA" 
+                            Command="{Binding ClearDataCommand}"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Background="#8B0000"
+                            Foreground="White"
+                            BorderThickness="0"
+                            CornerRadius="4"
+                            Padding="0,10"
+                            FontSize="12"
+                            FontWeight="SemiBold"
+                            Cursor="Hand">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="#A52A2A"/>
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+
+                    <Button Grid.Column="1"
+                            Content="SAVE &amp; CLOSE" 
+                            Command="{Binding CloseCommand}"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Background="#2a475e"
+                            Foreground="White"
+                            BorderBrush="#67c1f5"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="0,10"
+                            FontSize="12"
+                            FontWeight="SemiBold"
+                            Cursor="Hand">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="#3a5770"/>
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                </Grid>
             </StackPanel>
         </Border>
     </Panel>

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Text.RegularExpressions;
 using MySteamLibrary.Models;
+using MySteamLibrary.ViewModels;
 
 namespace MySteamLibrary.Services
 {
@@ -16,17 +17,16 @@ namespace MySteamLibrary.Services
     {
         private readonly HttpClient _httpClient;
         private readonly CacheService _cacheService;
+        private readonly SettingsViewModel _settings;
 
-        // Credentials for the Steam Web API
-        private const string ApiKey = "0DDEF6A47FB7E0304DF047955F976F4C";
-        private const string SteamId = "76561198117663948";
-
-        public SteamApiService()
+        public SteamApiService(SettingsViewModel settings)
         {
             // Initialize the HTTP client for web requests
             _httpClient = new HttpClient();
             // Initialize the cache service for local storage
             _cacheService = new CacheService();
+            // Store reference to settings for accessing API key and Steam ID
+            _settings = settings;
         }
 
         /// <summary>
@@ -146,10 +146,21 @@ namespace MySteamLibrary.Services
 
         /// <summary>
         /// Communicates directly with the Steam Web API to get the owned games list.
+        /// Now uses credentials from SettingsViewModel instead of hardcoded values.
         /// </summary>
         private async Task<List<GameModel>> FetchOwnedGamesFromApiAsync()
         {
-            string url = $"https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={ApiKey}&steamid={SteamId}&include_appinfo=true&format=json";
+            string apiKey = _settings.GetApiKey();
+            string steamId = _settings.GetSteamId();
+
+            // Validate that credentials are provided
+            if (string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(steamId))
+            {
+                System.Diagnostics.Debug.WriteLine("Steam API Key or Steam ID is missing. Please configure in Settings.");
+                return new List<GameModel>();
+            }
+
+            string url = $"https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={apiKey}&steamid={steamId}&include_appinfo=true&format=json";
 
             try
             {
