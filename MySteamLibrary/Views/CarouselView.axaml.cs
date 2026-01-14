@@ -23,7 +23,6 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
     private GameModel? _currentSelectedGame;
     private bool _isEffectOverlayVisible;
     private CarouselEffect _currentEffect;
-    private bool _isScrolling = false;
     private System.Timers.Timer? _scrollTimer;
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -359,44 +358,17 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
 
     // ===== NEW: PHASE 2 - TITLE POSITIONING =====
 
-    private int _updateRetryCount = 0;
-    private Size _lastKnownSize = new Size(0, 0);
 
     private void OnSizeChangedForTitle(object? sender, SizeChangedEventArgs e)
     {
-        // Only update title position if this is a REAL window resize, not scroll-related
-        // Check if the size actually changed (not just a layout pass)
-        if (_lastKnownSize.Width == 0 && _lastKnownSize.Height == 0)
-        {
-            _lastKnownSize = e.NewSize;
-            return; // First time, just record it
-        }
-
-        bool actualResize = Math.Abs(e.NewSize.Width - _lastKnownSize.Width) > 10 ||
-                           Math.Abs(e.NewSize.Height - _lastKnownSize.Height) > 10;
-
-        if (actualResize)
-        {
-            System.Diagnostics.Debug.WriteLine($"REAL WINDOW RESIZE: {_lastKnownSize} -> {e.NewSize}");
-            _lastKnownSize = e.NewSize;
-
-            // Reset retry counter and update
-            _updateRetryCount = 0;
-            TryUpdateTitlePosition();
-        }
-        else
-        {
-            System.Diagnostics.Debug.WriteLine($"Ignoring minor size change (probably scroll-related)");
-        }
+        // Update title position on window resize
+        UpdateTitlePosition();
     }
 
     private void OnPropertyChangedForTitle(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(CurrentSelectedGame))
         {
-            _updateRetryCount = 0;
-            _isScrolling = true; // Mark that we're scrolling
-
             // Stop existing timer if any
             _scrollTimer?.Stop();
 
@@ -405,35 +377,25 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
             _scrollTimer.AutoReset = false;
             _scrollTimer.Elapsed += (s, args) =>
             {
-                _isScrolling = false;
-
                 // Update on UI thread
                 Dispatcher.UIThread.Post(() =>
                 {
-                    TryUpdateTitlePosition();
+                    UpdateTitlePosition();
                 }, DispatcherPriority.Loaded);
             };
             _scrollTimer.Start();
         }
     }
 
-    private void TryUpdateTitlePosition()
+    private void UpdateTitlePosition()
     {
-        if (TitlePanel == null || CarouselRepeater == null || CurrentSelectedGame == null)
+        if (TitlePanel == null || CurrentSelectedGame == null)
             return;
 
         try
         {
-            // Wait for 2 layout passes to ensure TextBlocks have rendered with new text
-
-            Dispatcher.UIThread.Post(() =>
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-
-                    DoActualTitleUpdate();
-                }, DispatcherPriority.Loaded);
-            }, DispatcherPriority.Loaded);
+            var titleY = CalculateTitleY();
+            Canvas.SetTop(TitlePanel, titleY);
         }
         catch (Exception ex)
         {
@@ -441,53 +403,9 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
         }
     }
 
-    private void DoActualTitleUpdate()
+    private double CalculateTitleY()
     {
-        if (TitlePanel == null || CarouselRepeater == null || CurrentSelectedGame == null)
-            return;
-
-        try
-        {
-            // Force TitlePanel to measure itself with new content
-            TitlePanel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-
-            // Now get the actual desired width
-            double actualTitleWidth = TitlePanel.DesiredSize.Width;
-
-            System.Diagnostics.Debug.WriteLine($"Measured TitlePanel width: {actualTitleWidth}");
-
-            var position = CalculateTitlePosition();
-
-            // Adjust X to center the title (subtract half width)
-            double centeredX = position.X - (actualTitleWidth / 2);
-
-            System.Diagnostics.Debug.WriteLine($"*** SETTING Canvas Position: X={centeredX} (centered from {position.X}), Y={position.Y} ***");
-
-            // Update Canvas position
-            Canvas.SetLeft(TitlePanel, centeredX);
-            Canvas.SetTop(TitlePanel, position.Y);
-
-            System.Diagnostics.Debug.WriteLine($"*** Canvas.GetLeft result: {Canvas.GetLeft(TitlePanel)} ***");
-            System.Diagnostics.Debug.WriteLine($"*** Canvas.GetTop result: {Canvas.GetTop(TitlePanel)} ***");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error in DoActualTitleUpdate: {ex.Message}");
-        }
-    }
-
-    private void UpdateTitlePosition()
-    {
-        System.Diagnostics.Debug.WriteLine(">>> UpdateTitlePosition CALLED <<<");
-        _updateRetryCount = 0;
-        TryUpdateTitlePosition();
-    }
-
-    private Point CalculateTitlePosition()
-    {
-        System.Diagnostics.Debug.WriteLine("=== CalculateTitlePosition CALLED ===");
-
-        // Calculate where the selected card WILL BE after scrolling completes
+        // Calculate where the title should be positioned vertically
         // Base card size
         const double baseCardHeight = 330;
 
@@ -503,19 +421,9 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
         double cardTop = (Bounds.Height / 2) - (scaledCardHeight / 2);
         double cardBottom = cardTop + scaledCardHeight;
 
-        // Title goes 20px below the card (closer)
+        // Title goes 20px below the card
         const double gapBelowCard = 20;
-        double titleY = cardBottom + gapBelowCard;
-
-        // For X: Just use window center - TitlePanel has HorizontalAlignment=Center
-        // so Avalonia will center it around this point automatically!
-        double titleX = Bounds.Width / 2;
-
-        System.Diagnostics.Debug.WriteLine($"Window: {windowWidth}x{windowHeight}");
-        System.Diagnostics.Debug.WriteLine($"Adaptive Zoom: {adaptiveZoom}");
-        System.Diagnostics.Debug.WriteLine($"Title Position: X={titleX} (center), Y={titleY}");
-
-        return new Point(titleX, titleY);
+        return cardBottom + gapBelowCard;
     }
 
     // Local copy of zoom calculation (same as in CarouselTransformConverter)

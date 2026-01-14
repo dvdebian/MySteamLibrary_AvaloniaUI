@@ -155,36 +155,34 @@
                 HorizontalAlignment="Stretch">
             
             <StackPanel x:Name="TitlePanel"
-                Canvas.Top="0"
-                Width="{Binding Bounds.Width, ElementName=TitleOverlay}"
-                Spacing="5">
-        
-        
-        <TextBlock x:Name="TitleText"
-                   Text="{Binding CurrentSelectedGame.Title, RelativeSource={RelativeSource AncestorType=views:CarouselView}}"
-                   FontSize="32"
-                   FontWeight="ExtraBold"
-                   Foreground="White"
-                   TextAlignment="Center" 
-                   HorizontalAlignment="Stretch"
-                   TextWrapping="NoWrap"
-                   Margin="20,10,20,0"/>
-        
-        <TextBlock x:Name="PlayTimeText"
-                   Text="{Binding CurrentSelectedGame.PlayTime, StringFormat='{}{0} HOURS PLAYED', RelativeSource={RelativeSource AncestorType=views:CarouselView}}"
-                   FontSize="14"
-                   FontWeight="SemiBold"
-                   Foreground="#99ffffff"
-                   TextAlignment="Center"
-                   HorizontalAlignment="Stretch"
-                   LetterSpacing="2"
-                   Margin="20,0,20,10"/>
-    </StackPanel>
+                        Canvas.Top="0"
+                        Width="{Binding Bounds.Width, ElementName=TitleOverlay}"
+                        Spacing="5">
+                
+                <TextBlock x:Name="TitleText"
+                           Text="{Binding CurrentSelectedGame.Title, RelativeSource={RelativeSource AncestorType=views:CarouselView}}"
+                           FontSize="32"
+                           FontWeight="ExtraBold"
+                           Foreground="White"
+                           TextAlignment="Center" 
+                           HorizontalAlignment="Stretch"
+                           TextWrapping="NoWrap"
+                           Margin="20,10,20,0"/>
+                
+                <TextBlock x:Name="PlayTimeText"
+                           Text="{Binding CurrentSelectedGame.PlayTime, StringFormat='{}{0} HOURS PLAYED', RelativeSource={RelativeSource AncestorType=views:CarouselView}}"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Foreground="#99ffffff"
+                           TextAlignment="Center"
+                           HorizontalAlignment="Stretch"
+                           LetterSpacing="2"
+                           Margin="20,0,20,10"/>
+            </StackPanel>
             
-            <!-- Smooth transitions for position changes -->
+            <!-- Smooth transition for vertical position changes -->
             <Canvas.Transitions>
                 <Transitions>
-                    <DoubleTransition Property="Canvas.Left" Duration="0:0:0.4" Easing="CubicEaseOut"/>
                     <DoubleTransition Property="Canvas.Top" Duration="0:0:0.4" Easing="CubicEaseOut"/>
                 </Transitions>
             </Canvas.Transitions>
