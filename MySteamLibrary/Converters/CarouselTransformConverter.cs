@@ -17,19 +17,23 @@ public class CarouselTransformConverter : IMultiValueConverter
     public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
         double windowWidth = 1920.0;
+        double windowHeight = 1080.0;
+
         if (values.Count > 3)
         {
-            if (values[3] is Rect rect) windowWidth = rect.Width;
-            else if (values[3] is double d) windowWidth = d;
+            if (values[3] is Rect rect)
+            {
+                windowWidth = rect.Width;
+                windowHeight = rect.Height;
+            }
+            else if (values[3] is double d)
+            {
+                windowWidth = d;
+            }
         }
+
         double adaptiveBase = Math.Clamp(windowWidth / 1920.0, 0.75, 1.1);
 
-        // --- HEIGHT FIX ---
-        if (parameter?.ToString() == "GetHeight")
-        {
-            bool needsExtraHeight = CurrentMode == CarouselEffect.ModernStackArc || CurrentMode == CarouselEffect.Wave;
-            return 330 * (needsExtraHeight ? 1.6 : 1.6) * adaptiveBase;
-        }
 
         double scaleX = 1.0, scaleY = 1.0, skewY = 0.0, translateX = 0.0, translateY = 0.0;
 
@@ -46,7 +50,8 @@ public class CarouselTransformConverter : IMultiValueConverter
 
             if (diff == 0)
             {
-                scaleX = scaleY = 1.4 * adaptiveBase;
+                // Enhanced adaptive zoom based on window size
+                scaleX = scaleY = CalculateAdaptiveZoom(windowWidth, windowHeight, adaptiveBase);
 
                 if (CurrentMode == CarouselEffect.ModernStackArc || CurrentMode == CarouselEffect.Wave)
                 {
@@ -291,8 +296,34 @@ public class CarouselTransformConverter : IMultiValueConverter
         catch { return TransformOperations.Parse("scale(1,1)"); }
     }
 
+    /// <summary>
+    /// Calculates enhanced adaptive zoom for selected card based on window dimensions.
+    /// Provides progressive zoom: bigger windows get dramatically larger zoom.
+    /// </summary>
+    private double CalculateAdaptiveZoom(double windowWidth, double windowHeight, double adaptiveBase)
+    {
+        // Calculate adaptive base from both dimensions
+        double widthFactor = Math.Clamp(windowWidth / 1920.0, 0.75, 1.5);
+        double heightFactor = Math.Clamp(windowHeight / 1080.0, 0.8, 1.8);
+        double combinedBase = (widthFactor + heightFactor) / 2.0;
+
+        // Progressive zoom multiplier based on window height
+        double zoomMultiplier;
+
+        if (windowHeight < 700)
+            zoomMultiplier = 1.3;      // Small windows: subtle zoom
+        else if (windowHeight < 900)
+            zoomMultiplier = 1.5;      // Medium windows: moderate zoom
+        else if (windowHeight < 1200)
+            zoomMultiplier = 1.7;      // Large windows: strong zoom
+        else
+            zoomMultiplier = 2.0;      // XL windows: dramatic zoom
+
+        return zoomMultiplier * combinedBase;
+    }
+
     private void ApplyModernStack(int diff, int absDiff, double adaptiveBase,
-        out double sX, out double sY, out double tX, out double skY)
+    out double sX, out double sY, out double tX, out double skY)
     {
         double widthComp = Math.Max(0.4, 1.0 - (absDiff * 0.15));
         double heightRed = Math.Max(0.7, 1.0 - (absDiff * 0.05));

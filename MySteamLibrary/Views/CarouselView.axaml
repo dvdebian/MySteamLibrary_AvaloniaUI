@@ -60,25 +60,16 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid x:Name="MainGrid" RowDefinitions="30, Auto, Auto">
+    <Grid x:Name="MainGrid">
         <ScrollViewer x:Name="CarouselScroller"
-                      Grid.Row="1"
                       Background="Transparent"
                       HorizontalScrollBarVisibility="Hidden"
                       VerticalScrollBarVisibility="Disabled"
                       PointerWheelChanged="OnPointerWheelChanged"
                       Focusable="True"
                       ClipToBounds="False"
-                      VerticalAlignment="Bottom"
-                      Margin="0">
-
-            <ScrollViewer.Height>
-                <MultiBinding Converter="{StaticResource CarouselTransformConverter}" ConverterParameter="GetHeight">
-                    <Binding Path="Bounds" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                    <Binding Path="Parent.SelectedGame" />
-                    <Binding Path="Games"/>
-                </MultiBinding>
-            </ScrollViewer.Height>
+                      VerticalAlignment="Stretch"
+                      HorizontalAlignment="Stretch">
 
             <ScrollViewer.Transitions>
                 <Transitions>
@@ -108,7 +99,7 @@
                             <Border Width="220" 
                                     Height="330"
                                     Margin="{Binding Bounds.Width, RelativeSource={RelativeSource AncestorType=views:CarouselView}, Converter={StaticResource DynamicItemMarginConverter}}"
-                                    VerticalAlignment="Bottom" 
+                                    VerticalAlignment="Center" 
                                     ClipToBounds="False">
                                     
                                 <Border.ZIndex>
@@ -125,11 +116,7 @@
                                             VerticalAlignment="Center"
                                             CornerRadius="12" 
                                             ClipToBounds="False" 
-                                            PointerPressed="OnCoverClicked"
-                                            BoxShadow="0 15 35 5 #AA000000, 0 5 15 3 #6667c1f5"
-                                            BorderBrush="#3367c1f5"
-                                            BorderThickness="2"
-                                            Opacity="0.75">
+                                            PointerPressed="OnCoverClicked">
                                         
                                         <Border.RenderTransformOrigin>50%,50%</Border.RenderTransformOrigin>
                                         
@@ -145,9 +132,6 @@
                                         <Border.Transitions>
                                             <Transitions>
                                                 <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.4" Easing="CubicEaseOut"/>
-                                                <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.3"/>
-                                                <BrushTransition Property="BorderBrush" Duration="0:0:0.3"/>
-                                                <DoubleTransition Property="Opacity" Duration="0:0:0.3"/>
                                             </Transitions>
                                         </Border.Transitions>
 
@@ -164,30 +148,51 @@
             </Border>
         </ScrollViewer>
 
-        <StackPanel Grid.Row="2"
-                    VerticalAlignment="Top"
-                    Margin="0,0,0,30" 
-                    HorizontalAlignment="Center"
-                    Spacing="5" 
-                    IsHitTestVisible="False"
-                    DataContext="{Binding CurrentSelectedGame, RelativeSource={RelativeSource AncestorType=views:CarouselView}}">
+        <!-- Canvas Overlay for Floating Title -->
+        <Canvas x:Name="TitleOverlay"
+                IsHitTestVisible="False"
+                VerticalAlignment="Stretch"
+                HorizontalAlignment="Stretch">
             
-            <TextBlock Text="{Binding Title}" 
-                       FontSize="32" 
-                       FontWeight="ExtraBold"
-                       Foreground="White"
-                       TextAlignment="Center"/>
+            <StackPanel x:Name="TitlePanel"
+                Canvas.Top="0"
+                Width="{Binding Bounds.Width, ElementName=TitleOverlay}"
+                Spacing="5">
+        
+        
+        <TextBlock x:Name="TitleText"
+                   Text="{Binding CurrentSelectedGame.Title, RelativeSource={RelativeSource AncestorType=views:CarouselView}}"
+                   FontSize="32"
+                   FontWeight="ExtraBold"
+                   Foreground="White"
+                   TextAlignment="Center" 
+                   HorizontalAlignment="Stretch"
+                   TextWrapping="NoWrap"
+                   Margin="20,10,20,0"/>
+        
+        <TextBlock x:Name="PlayTimeText"
+                   Text="{Binding CurrentSelectedGame.PlayTime, StringFormat='{}{0} HOURS PLAYED', RelativeSource={RelativeSource AncestorType=views:CarouselView}}"
+                   FontSize="14"
+                   FontWeight="SemiBold"
+                   Foreground="#99ffffff"
+                   TextAlignment="Center"
+                   HorizontalAlignment="Stretch"
+                   LetterSpacing="2"
+                   Margin="20,0,20,10"/>
+    </StackPanel>
             
-            <TextBlock Text="{Binding PlayTime, StringFormat='{}{0} HOURS PLAYED'}" 
-                       FontSize="14" 
-                       FontWeight="SemiBold"
-                       Foreground="#99ffffff"
-                       TextAlignment="Center"
-                       LetterSpacing="2"/>
-        </StackPanel>
+            <!-- Smooth transitions for position changes -->
+            <Canvas.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Canvas.Left" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+                    <DoubleTransition Property="Canvas.Top" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+                </Transitions>
+            </Canvas.Transitions>
+        </Canvas>
+
 
         <!-- Effect Selector Overlay -->
-        <Border Grid.Row="0" Grid.RowSpan="3"
+        <Border
                 Background="#CC000000"
                 IsVisible="{Binding IsEffectOverlayVisible, ElementName=RootCarouselView}"
                 IsHitTestVisible="{Binding IsEffectOverlayVisible, ElementName=RootCarouselView}">
