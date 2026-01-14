@@ -22,22 +22,42 @@
     <UserControl.Styles>
         <Style Selector="Border.CarouselCard Border#CardVisual">
             <Setter Property="BoxShadow" Value="0 5 15 0 #88000000"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderBrush">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                        <GradientStop Color="#707070" Offset="0"/>
+                        <GradientStop Color="#A0A0A0" Offset="0.3"/>
+                        <GradientStop Color="#D0D0D0" Offset="0.5"/>
+                        <GradientStop Color="#A0A0A0" Offset="0.7"/>
+                        <GradientStop Color="#707070" Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
             <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="Opacity" Value="0.6"/>
+            <Setter Property="Padding" Value="2"/>
+            <Setter Property="Opacity" Value="1.0"/>
             <Setter Property="Transitions">
                 <Transitions>
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.4" Easing="CircularEaseOut"/>
                     <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.25" Easing="CubicEaseOut"/>
                     <BrushTransition Property="BorderBrush" Duration="0:0:0.25"/>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.3"/>
                 </Transitions>
             </Setter>
         </Style>
 
         <Style Selector="Border.CarouselCard.Selected Border#CardVisual">
             <Setter Property="BoxShadow" Value="0 20 40 5 #AA000000"/>
-            <Setter Property="BorderBrush" Value="#44FFFFFF"/>
+            <Setter Property="BorderBrush">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                        <GradientStop Color="#A0A0A0" Offset="0"/>
+                        <GradientStop Color="#D0D0D0" Offset="0.3"/>
+                        <GradientStop Color="#FFFFFF" Offset="0.5"/>
+                        <GradientStop Color="#D0D0D0" Offset="0.7"/>
+                        <GradientStop Color="#A0A0A0" Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
             <Setter Property="Opacity" Value="1.0"/>
         </Style>
 
@@ -61,6 +81,21 @@
     </UserControl.Styles>
 
     <Grid x:Name="MainGrid">
+        <!-- Blurred Background -->
+        <Grid x:Name="BackgroundLayer" ClipToBounds="True">
+            <Image x:Name="BackgroundImage"
+                   Source="{Binding CurrentSelectedGame.ImagePath, RelativeSource={RelativeSource AncestorType=views:CarouselView}, Converter={StaticResource VariableImageConverter}}"
+                   Stretch="UniformToFill"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center">
+                <Image.Effect>
+                    <BlurEffect Radius="80"/>
+                </Image.Effect>
+            </Image>
+            <!-- Dark overlay for better readability -->
+            <Border Background="#AA000000"/>
+        </Grid>
+
         <ScrollViewer x:Name="CarouselScroller"
                       Background="Transparent"
                       HorizontalScrollBarVisibility="Hidden"
@@ -98,6 +133,7 @@
                         <DataTemplate x:DataType="models:GameModel">
                             <Border Width="220" 
                                     Height="330"
+                                    Classes="CarouselCard"
                                     Margin="{Binding Bounds.Width, RelativeSource={RelativeSource AncestorType=views:CarouselView}, Converter={StaticResource DynamicItemMarginConverter}}"
                                     VerticalAlignment="Center" 
                                     ClipToBounds="False">
@@ -115,7 +151,7 @@
                                             Background="#2a2e33" 
                                             VerticalAlignment="Center"
                                             CornerRadius="12" 
-                                            ClipToBounds="False" 
+                                            ClipToBounds="True" 
                                             PointerPressed="OnCoverClicked">
                                         
                                         <Border.RenderTransformOrigin>50%,50%</Border.RenderTransformOrigin>
@@ -135,7 +171,7 @@
                                             </Transitions>
                                         </Border.Transitions>
 
-                                        <Border CornerRadius="12" ClipToBounds="True">
+                                        <Border CornerRadius="10" ClipToBounds="True">
                                             <Image Source="{Binding ImagePath, Converter={StaticResource VariableImageConverter}}" 
                                                    Stretch="UniformToFill"/>
                                         </Border>
