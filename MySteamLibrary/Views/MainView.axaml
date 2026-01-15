@@ -99,11 +99,16 @@
         
         <Border Grid.Row="0" Background="{StaticResource SteamHeaderBg}" Padding="20">
             <StackPanel Spacing="15">
+                
                 <TextBlock Text="MY STEAM LIBRARY" 
                            FontSize="22" 
                            FontWeight="Black" 
                            Foreground="White"
-                           LetterSpacing="1"/>
+                           LetterSpacing="1">
+                    <Run Text="  |" FontWeight="Light" FontSize="20" Foreground="#AAFFFFFF"/>
+                    <Run Text="{Binding GameListTotal}" FontWeight="Light" FontSize="16" />
+                    <Run Text=" GAMES" FontWeight="Light" FontSize="12"  Foreground="#AAFFFFFF"/>
+                    </TextBlock>
                 
                 <Grid ColumnDefinitions="*, Auto">
                     
