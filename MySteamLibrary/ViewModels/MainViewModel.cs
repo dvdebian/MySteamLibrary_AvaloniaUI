@@ -1,6 +1,4 @@
-﻿// Replace the beginning of MainViewModel.cs with this updated version:
-
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Linq;
@@ -95,7 +93,7 @@ public partial class MainViewModel : ViewModelBase
             2 => SortCriteria.AppId,
             _ => SortCriteria.Alphabetical
         };
-        ApplyFilteringAndSorting();
+        this.ApplyFilteringAndSorting();
     }
     /// <summary>
     /// Configuration and user credentials logic.
@@ -251,33 +249,33 @@ public partial class MainViewModel : ViewModelBase
                 // Refresh the visible collection based on current sort/filter
                 ApplyFilteringAndSorting();
 
+
                 // Check if previous sync was incomplete
                 bool isFullySynced = await _cacheService.LoadSyncStateAsync();
+
+                // Always set progress values (whether complete or incomplete)
+                int gamesWithImages = _masterLibrary.Count(g => !string.IsNullOrEmpty(g.ImagePath) && File.Exists(g.ImagePath));
+                int gamesWithDescriptions = _masterLibrary.Count(g =>
+                    !string.IsNullOrWhiteSpace(g.Description) &&
+                    g.Description != "Loading description..." &&
+                    g.Description != "No description available.");
+
+                // Set up sync panel progress
+                GameListTotal = _masterLibrary.Count;
+                GameListCurrent = _masterLibrary.Count;
+                GameListCompleted = true;
+
+                ImagesTotal = _masterLibrary.Count;
+                ImagesCurrent = gamesWithImages;
+                ImagesCompleted = (gamesWithImages == _masterLibrary.Count);
+
+                DescriptionsTotal = _masterLibrary.Count;
+                DescriptionsCurrent = gamesWithDescriptions;
+                DescriptionsCompleted = (gamesWithDescriptions == _masterLibrary.Count);
 
                 if (!isFullySynced && _masterLibrary.Count > 0)
                 {
                     System.Diagnostics.Debug.WriteLine("🔄 Previous sync incomplete - auto-resuming...");
-
-                    // Calculate current progress
-                    int gamesWithImages = _masterLibrary.Count(g => !string.IsNullOrEmpty(g.ImagePath) && File.Exists(g.ImagePath));
-                    int gamesWithDescriptions = _masterLibrary.Count(g =>
-                        !string.IsNullOrWhiteSpace(g.Description) &&
-                        g.Description != "Loading description..." &&
-                        g.Description != "No description available.");
-
-                    // Set up sync panel
-                    GameListTotal = _masterLibrary.Count;
-                    GameListCurrent = _masterLibrary.Count;
-                    GameListCompleted = true;
-
-                    ImagesTotal = _masterLibrary.Count;
-                    ImagesCurrent = gamesWithImages;
-                    ImagesCompleted = (gamesWithImages == _masterLibrary.Count);
-
-                    DescriptionsTotal = _masterLibrary.Count;
-                    DescriptionsCurrent = gamesWithDescriptions;
-                    DescriptionsCompleted = (gamesWithDescriptions == _masterLibrary.Count);
-
 
                     // Show sync panel (user can expand manually with toggle button)
                     IsSyncPanelVisible = true;
@@ -287,6 +285,11 @@ public partial class MainViewModel : ViewModelBase
 
                     // Resume background sync
                     _ = Task.Run(() => BackgroundUpdateDataAsync());
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"✅ Sync complete: Images {ImagesCurrent}/{ImagesTotal}, Descriptions {DescriptionsCurrent}/{DescriptionsTotal}");
+                    // Keep IsSyncPanelVisible = false (no active sync)
                 }
             }
         }
@@ -471,9 +474,7 @@ public partial class MainViewModel : ViewModelBase
             await _cacheService.SaveSyncStateAsync(true);
             System.Diagnostics.Debug.WriteLine("✅ Full sync completed!");
 
-            // Hide sync panel after 3 seconds
-            await Task.Delay(3000);
-            IsSyncPanelVisible = false;
+            // Note: IsSyncPanelVisible stays true so users can see final sync stats
         }
         catch (Exception ex)
         {
