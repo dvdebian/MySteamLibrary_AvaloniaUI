@@ -165,26 +165,58 @@
                     </StackPanel>
                 </Grid>
                 
-                   <TextBox Watermark="🔍 SEARCH GAMES..." 
-                         Text="{Binding SearchText}" 
-                         HorizontalAlignment="Stretch"
-                         Background="#0d1419"
-                         BorderBrush="#2a3f54"
-                         BorderThickness="2"
-                         CornerRadius="8"
-                         Padding="14,10"
-                         FontSize="13"
-                         Foreground="White">
-                    <TextBox.Styles>
-                        <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
-                            <Setter Property="BorderBrush" Value="#2a3f54"/>
-                            <Setter Property="Background" Value="#0d1419"/>
-                        </Style>
-                        <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
-                            <Setter Property="BorderBrush" Value="#537a97"/>
-                        </Style>
-                    </TextBox.Styles>
-                </TextBox>
+                
+                <!-- Search Box with Clear Button -->
+                <Grid>
+                    <TextBox Watermark="🔍 SEARCH GAMES..." 
+                             Text="{Binding SearchText}" 
+                             HorizontalAlignment="Stretch"
+                             Background="#0d1419"
+                             BorderBrush="#2a3f54"
+                             BorderThickness="2"
+                             CornerRadius="8"
+                             Padding="14,10,45,10"
+                             FontSize="13"
+                             Foreground="White">
+                        <TextBox.Styles>
+                            <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+                                <Setter Property="BorderBrush" Value="#2a3f54"/>
+                                <Setter Property="Background" Value="#0d1419"/>
+                            </Style>
+                            <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                                <Setter Property="BorderBrush" Value="#537a97"/>
+                            </Style>
+                        </TextBox.Styles>
+                    </TextBox>
+                    
+                    <!-- Clear Button (appears when text exists) -->
+                    <Button Width="22" Height="22"
+                            Background="#1a2a3a"
+                            BorderBrush="#2a3f54"
+                            BorderThickness="2"
+                            CornerRadius="11"
+                            Padding="0"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Margin="0,0,10,0"
+                            Command="{Binding ClearSearchCommand}"
+                            Cursor="Hand"
+                            IsVisible="{Binding SearchText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="#2a3f54"/>
+                                <Setter Property="BorderBrush" Value="#537a97"/>
+                            </Style>
+                        </Button.Styles>
+                        <TextBlock Text="✕" 
+                                   FontSize="14" 
+                                   Foreground="#8395a7" 
+                                   HorizontalAlignment="Center" 
+                                   VerticalAlignment="Center"
+                                   FontWeight="Bold"/>
+                    </Button>
+                </Grid>
+
 
 
                 <!-- Filter/Sync Area - Single Border Container -->

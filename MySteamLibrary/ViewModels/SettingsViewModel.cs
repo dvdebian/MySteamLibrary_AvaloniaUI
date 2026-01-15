@@ -41,6 +41,10 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private string _steamPath = @"C:\Program Files (x86)\Steam";
 
+    // The selected carousel effect mode
+    [ObservableProperty]
+    private Models.CarouselEffect _selectedCarouselEffect = Models.CarouselEffect.ModernStack;
+
     public SettingsViewModel()
     {
         // Load settings from disk on startup
@@ -111,6 +115,7 @@ public partial class SettingsViewModel : ViewModelBase
                     SteamApiKey = settings.SteamApiKey ?? string.Empty;
                     SteamId = settings.SteamId ?? string.Empty;
                     SteamPath = settings.SteamPath ?? @"C:\Program Files (x86)\Steam";
+                    SelectedCarouselEffect = settings.SelectedCarouselEffect;
                 }
             }
         }
@@ -131,7 +136,8 @@ public partial class SettingsViewModel : ViewModelBase
             {
                 SteamApiKey = SteamApiKey,
                 SteamId = SteamId,
-                SteamPath = SteamPath
+                SteamPath = SteamPath,
+                SelectedCarouselEffect = SelectedCarouselEffect
             };
 
             var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
@@ -161,7 +167,7 @@ public partial class SettingsViewModel : ViewModelBase
     /// </summary>
     [RelayCommand]
     private async Task Cancel()
-    {       
+    {
         RequestClose?.Invoke();
     }
 
@@ -231,5 +237,6 @@ public partial class SettingsViewModel : ViewModelBase
         public string? SteamApiKey { get; set; }
         public string? SteamId { get; set; }
         public string? SteamPath { get; set; }
+        public Models.CarouselEffect SelectedCarouselEffect { get; set; } = Models.CarouselEffect.ModernStack;
     }
 }

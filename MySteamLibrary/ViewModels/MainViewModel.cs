@@ -538,6 +538,12 @@ public partial class MainViewModel : ViewModelBase
     {
         IsSyncPanelExpanded = !IsSyncPanelExpanded;
     }
+
+    [RelayCommand]
+    public void ClearSearch()
+    {
+        SearchText = string.Empty;
+    }
     /// <summary>
     /// Navigates to the details view for a specific game.
     /// </summary>

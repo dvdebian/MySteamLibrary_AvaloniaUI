@@ -85,7 +85,7 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
     {
         InitializeComponent();
 
-        // Initialize with the current effect from the converter
+        // Load saved effect from settings (will be overridden in DataContextChanged if DataContext exists)
         CurrentEffect = CarouselTransformConverter.CurrentMode;
 
         DataContextChanged += OnDataContextChanged;
@@ -171,6 +171,13 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
 
         // Force refresh of the visual transforms
         RefreshCarouselTransforms();
+
+        // Save the selected effect to settings
+        if (DataContext is CarouselViewModel vm)
+        {
+            vm.Parent.Settings.SelectedCarouselEffect = CurrentEffect;
+            _ = vm.Parent.Settings.SaveSettingsAsync();
+        }
     }
 
     public void NextEffect()
@@ -184,8 +191,16 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
 
         // Force refresh of the visual transforms
         RefreshCarouselTransforms();
+        // Save the selected effect to settings
+        if (DataContext is CarouselViewModel vm)
+        {
+            vm.Parent.Settings.SelectedCarouselEffect = CurrentEffect;
+            _ = vm.Parent.Settings.SaveSettingsAsync();
+        }
     }
 
+        
+      
     private void RefreshCarouselTransforms()
     {
         // Trigger a re-evaluation of the bindings by temporarily changing selection
@@ -199,8 +214,14 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
 
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
+        // The 'if' starts here. We open a brace to group all logic that depends on 'vm'
         if (DataContext is CarouselViewModel vm)
         {
+            // 1. Load saved carousel effect from settings
+            CurrentEffect = vm.Parent.Settings.SelectedCarouselEffect;
+            CarouselTransformConverter.CurrentMode = CurrentEffect;
+
+            // 2. Subscribe to property changes on the Parent (MainViewModel)
             vm.Parent.PropertyChanged += (s, args) =>
             {
                 if (args.PropertyName == nameof(MainViewModel.SelectedGame))
@@ -211,6 +232,7 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
                 }
             };
 
+            // 3. Ensure a game is selected if none is currently active
             if (vm.Parent.SelectedGame == null && vm.Games != null)
             {
                 var firstGame = vm.Games.FirstOrDefault();
@@ -220,11 +242,13 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
                 }
             }
 
+            // 4. Initialize the current state
             CurrentSelectedGame = vm.Parent.SelectedGame;
             UpdateSelectedIndex();
 
+            // 5. Scroll to the selected item once the UI is loaded
             Dispatcher.UIThread.Post(() => ScrollToSelected(), DispatcherPriority.Loaded);
-        }
+        } // This closing brace ends the scope of 'vm'
     }
 
     private void UpdateSelectedIndex()
