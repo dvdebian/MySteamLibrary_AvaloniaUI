@@ -85,19 +85,32 @@
     </UserControl.Styles>
 
     <Grid RowDefinitions="1*, Auto, 1*">
-        <!-- Blurred Background -->
+        <!-- Dual Blurred Backgrounds for True Crossfade -->
         <Grid x:Name="BackgroundLayer" 
               Grid.RowSpan="3" 
               ClipToBounds="True">
-            <Image x:Name="BackgroundImage"
-                   Source="{Binding Parent.SelectedGame.ImagePath, Converter={StaticResource VariableImageConverter}}"
+            <!-- Background Image 1 (Bottom Layer) -->
+            <Image x:Name="BackgroundImage1"
                    Stretch="UniformToFill"
                    HorizontalAlignment="Center"
-                   VerticalAlignment="Center">
+                   VerticalAlignment="Center"
+                   Opacity="1">
                 <Image.Effect>
                     <BlurEffect Radius="80"/>
                 </Image.Effect>
             </Image>
+            
+            <!-- Background Image 2 (Top Layer for crossfade) -->
+            <Image x:Name="BackgroundImage2"
+                   Stretch="UniformToFill"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Opacity="0">
+                <Image.Effect>
+                    <BlurEffect Radius="80"/>
+                </Image.Effect>
+            </Image>
+            
             <!-- Dark overlay for better readability -->
             <Border Background="#AA000000"/>
         </Grid>
@@ -205,14 +218,26 @@
                        FontSize="32" 
                        FontWeight="ExtraBold"
                        Foreground="White"
-                       TextAlignment="Center"/>
+                       TextAlignment="Center">
+                <TextBlock.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseInOut"/>
+                    </Transitions>
+                </TextBlock.Transitions>
+            </TextBlock>
             
             <TextBlock Text="{Binding PlayTime, StringFormat='{}{0} HOURS PLAYED'}" 
                        FontSize="14" 
                        FontWeight="SemiBold"
                        Foreground="#99ffffff"
                        TextAlignment="Center"
-                       LetterSpacing="2"/>
+                       LetterSpacing="2">
+                <TextBlock.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseInOut"/>
+                    </Transitions>
+                </TextBlock.Transitions>
+            </TextBlock>
         </StackPanel>
     </Grid>
 </UserControl>

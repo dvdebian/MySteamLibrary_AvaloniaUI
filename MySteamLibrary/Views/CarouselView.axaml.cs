@@ -1,15 +1,20 @@
 ﻿using Avalonia;
+using Avalonia.Animation;
+using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Media.Imaging;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using MySteamLibrary.ViewModels;
-using MySteamLibrary.Models;
 using MySteamLibrary.Converters;
+using MySteamLibrary.Models;
+using MySteamLibrary.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MySteamLibrary.Views;
 
@@ -24,6 +29,12 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
     private bool _isEffectOverlayVisible;
     private CarouselEffect _currentEffect;
     private System.Timers.Timer? _scrollTimer;
+    private Image? _backgroundImage1;
+    private Image? _backgroundImage2;
+    private bool _isImage1Active = true;
+    private string? _lastImagePath;
+    private bool _isAnimating = false;
+    private readonly BitmapValueConverter _imageConverter = new();
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -36,6 +47,7 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
             {
                 _currentSelectedGame = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentSelectedGame)));
+                OnBackgroundImageChanged();
             }
         }
     }
@@ -96,6 +108,32 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
             }, DispatcherPriority.Loaded);
 
             Dispatcher.UIThread.Post(() => CarouselScroller.Focus(), DispatcherPriority.Background);
+
+            // Setup dual background images for crossfade
+            Loaded += (s, e) =>
+            {
+                _backgroundImage1 = this.FindControl<Image>("BackgroundImage1");
+                _backgroundImage2 = this.FindControl<Image>("BackgroundImage2");
+
+                // Set initial image
+                var initialPath = CurrentSelectedGame?.ImagePath;
+                if (initialPath != null && _backgroundImage1 != null)
+                {
+                    _backgroundImage1.Source = _imageConverter.Convert(initialPath, typeof(Bitmap), null, null) as Bitmap;
+                    _backgroundImage1.Opacity = 1.0;
+                    _lastImagePath = initialPath;
+                }
+
+                if (_backgroundImage2 != null)
+                {
+                    _backgroundImage2.Opacity = 0.0;
+                }
+            };
+
+            Unloaded += (s, e) =>
+            {
+                // Cleanup if needed
+            };
         };
     }
 
@@ -444,5 +482,90 @@ public partial class CarouselView : UserControl, INotifyPropertyChanged
             zoomMultiplier = 2.0;
 
         return zoomMultiplier * combinedBase;
+    }
+
+    /// <summary>
+    /// True crossfade between two overlapping background images
+    /// </summary>
+    private async void OnBackgroundImageChanged()
+    {
+        if (_isAnimating) return;
+
+        var newImagePath = CurrentSelectedGame?.ImagePath;
+
+        // Only animate if the image path actually changed
+        if (newImagePath != _lastImagePath && _backgroundImage1 != null && _backgroundImage2 != null)
+        {
+            _isAnimating = true;
+            _lastImagePath = newImagePath;
+
+            try
+            {
+                // Determine which image to update and which to fade
+                var targetImage = _isImage1Active ? _backgroundImage2 : _backgroundImage1;
+                var currentImage = _isImage1Active ? _backgroundImage1 : _backgroundImage2;
+
+                // Load new image into the hidden layer
+                targetImage.Source = _imageConverter.Convert(newImagePath, typeof(Bitmap), null, null) as Bitmap;
+
+                // Create fade animations
+                var fadeOutAnimation = new Animation
+                {
+                    Duration = TimeSpan.FromMilliseconds(300),
+                    Easing = new CubicEaseInOut(),
+                    FillMode = FillMode.Forward,
+                    Children =
+                    {
+                        new KeyFrame
+                        {
+                            Cue = new Cue(0.0),
+                            Setters = { new Setter(OpacityProperty, 1.0) }
+                        },
+                        new KeyFrame
+                        {
+                            Cue = new Cue(1.0),
+                            Setters = { new Setter(OpacityProperty, 0.0) }
+                        }
+                    }
+                };
+
+                var fadeInAnimation = new Animation
+                {
+                    Duration = TimeSpan.FromMilliseconds(300),
+                    Easing = new CubicEaseInOut(),
+                    FillMode = FillMode.Forward,
+                    Children =
+                    {
+                        new KeyFrame
+                        {
+                            Cue = new Cue(0.0),
+                            Setters = { new Setter(OpacityProperty, 0.0) }
+                        },
+                        new KeyFrame
+                        {
+                            Cue = new Cue(1.0),
+                            Setters = { new Setter(OpacityProperty, 1.0) }
+                        }
+                    }
+                };
+
+                // Run both animations simultaneously for true crossfade
+                await Task.WhenAll(
+                    fadeOutAnimation.RunAsync(currentImage),
+                    fadeInAnimation.RunAsync(targetImage)
+                );
+
+                // Ensure final opacity values are set
+                currentImage.Opacity = 0.0;
+                targetImage.Opacity = 1.0;
+
+                // Flip active image
+                _isImage1Active = !_isImage1Active;
+            }
+            finally
+            {
+                _isAnimating = false;
+            }
+        }
     }
 }
