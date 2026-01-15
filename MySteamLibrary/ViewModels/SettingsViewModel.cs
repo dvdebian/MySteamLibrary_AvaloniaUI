@@ -154,6 +154,17 @@ public partial class SettingsViewModel : ViewModelBase
         RequestClose?.Invoke();
     }
 
+
+    /// <summary>
+    /// Triggered by the Cancel button in the UI.
+    /// Closes the settings window
+    /// </summary>
+    [RelayCommand]
+    private async Task Cancel()
+    {       
+        RequestClose?.Invoke();
+    }
+
     /// <summary>
     /// Opens the cache folder in Windows Explorer
     /// </summary>
@@ -172,8 +183,8 @@ public partial class SettingsViewModel : ViewModelBase
         try
         {
             // Clear the text boxes
-            SteamApiKey = string.Empty;
-            SteamId = string.Empty;
+            // SteamApiKey = string.Empty;
+            // SteamId = string.Empty;
 
             // Delete the settings file
             if (File.Exists(_settingsFile))

@@ -100,6 +100,40 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isCoverMode;
 
+
+    // Sync Progress Tracking Properties
+    [ObservableProperty]
+    private bool _isSyncPanelVisible;
+
+    [ObservableProperty]
+    private int _gameListTotal;
+
+    [ObservableProperty]
+    private int _gameListCurrent;
+
+    [ObservableProperty]
+    private bool _gameListCompleted;
+
+    [ObservableProperty]
+    private int _imagesTotal;
+
+    [ObservableProperty]
+    private int _imagesCurrent;
+
+    [ObservableProperty]
+    private bool _imagesCompleted;
+
+    [ObservableProperty]
+    private int _descriptionsTotal;
+
+    [ObservableProperty]
+    private int _descriptionsCurrent;
+
+    [ObservableProperty]
+    private bool _descriptionsCompleted;
+    // Sync panel collapse/expand state
+    [ObservableProperty]
+    private bool _isSyncPanelExpanded = true;
     /// <summary>
     /// Returns true when there are no games in the library.
     /// Used to show the "No data found" message.
@@ -229,7 +263,6 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
-
     /// <summary>
     /// Fetches fresh data from Steam API. 
     /// Updates the Master list first, then triggers the UI update.
@@ -250,6 +283,16 @@ public partial class MainViewModel : ViewModelBase
         {
             IsRefreshing = true;
             ErrorMessage = string.Empty; // Clear any previous error messages
+     
+
+            // Reset sync progress
+            GameListCompleted = false;
+            ImagesCompleted = false;
+            DescriptionsCompleted = false;
+            GameListCurrent = 0;
+            ImagesCurrent = 0;
+            DescriptionsCurrent = 0;
+            IsSyncPanelVisible = true;
 
             var freshGames = await _steamService.GetLibrarySkeletonAsync();
 
@@ -258,6 +301,15 @@ public partial class MainViewModel : ViewModelBase
                 _masterLibrary.Clear();
                 _masterLibrary.AddRange(freshGames);
                 ApplyFilteringAndSorting();
+
+                // Set totals
+                GameListTotal = freshGames.Count;
+                ImagesTotal = freshGames.Count;
+                DescriptionsTotal = freshGames.Count;
+
+                // Mark game list as complete
+                GameListCurrent = GameListTotal;
+                GameListCompleted = true;
 
                 // Save to disk and start fetching high-res images/descriptions in the background
                 await _cacheService.SaveLibraryCacheAsync(_masterLibrary);
@@ -268,6 +320,7 @@ public partial class MainViewModel : ViewModelBase
         {
             System.Diagnostics.Debug.WriteLine($"Error during refresh: {ex.Message}");
             ErrorMessage = $"Failed to refresh library: {ex.Message}";
+            IsSyncPanelVisible = false;
         }
         finally
         {
@@ -277,17 +330,66 @@ public partial class MainViewModel : ViewModelBase
 
     /// <summary>
     /// Handles the secondary and tertiary stages of loading (Images and Descriptions).
-    /// Updates the objects in the master library directly.
+    /// Updates the objects in the master library directly and reports progress.
     /// </summary>
     private async Task BackgroundUpdateDataAsync()
     {
-        var imageTasks = _masterLibrary.Select(game => _steamService.LoadGameImageAsync(game));
-        await Task.WhenAll(imageTasks);
+        try
+        {
+            // Stage 1: Download Images
+            var imageCount = 0;
+            foreach (var game in _masterLibrary)
+            {
+                await _steamService.LoadGameImageAsync(game);
+                imageCount++;
+                ImagesCurrent = imageCount;
+            }
 
-        await _cacheService.SaveLibraryCacheAsync(_masterLibrary);
-        await _steamService.RefreshDescriptionsAsync(_masterLibrary);
+            ImagesCompleted = true;
+            await _cacheService.SaveLibraryCacheAsync(_masterLibrary);
+
+            // Stage 2: Download Descriptions
+            var descCount = 0;
+            foreach (var game in _masterLibrary)
+            {
+                // Only fetch if empty or currently showing the placeholder/error state
+                if (string.IsNullOrWhiteSpace(game.Description) ||
+                    game.Description == "Loading description..." ||
+                    game.Description == "No description available.")
+                {
+                    game.Description = await _steamService.GetGameDescriptionAsync(game.AppId);
+                    descCount++;
+                    DescriptionsCurrent = descCount;
+
+                    // Save cache every 5 games
+                    if (descCount % 5 == 0)
+                    {
+                        await _cacheService.SaveLibraryCacheAsync(_masterLibrary);
+                    }
+
+                    // Delay to avoid IP block
+                    await Task.Delay(1500);
+                }
+                else
+                {
+                    // Count already existing descriptions
+                    descCount++;
+                    DescriptionsCurrent = descCount;
+                }
+            }
+
+            DescriptionsCompleted = true;
+            await _cacheService.SaveLibraryCacheAsync(_masterLibrary);
+
+            // Hide sync panel after 3 seconds
+            await Task.Delay(3000);
+            IsSyncPanelVisible = false;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in background update: {ex.Message}");
+        }
     }
-
     /// <summary>
     /// Switches the active view mode and ensures a selection exists for centering-based views.
     /// </summary>
@@ -338,6 +440,12 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     public void ToggleSettings() => IsSettingsOpen = !IsSettingsOpen;
 
+
+    [RelayCommand]
+    public void ToggleSyncPanel()
+    {
+        IsSyncPanelExpanded = !IsSyncPanelExpanded;
+    }
     /// <summary>
     /// Navigates to the details view for a specific game.
     /// </summary>

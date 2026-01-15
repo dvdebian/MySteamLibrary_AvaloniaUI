@@ -169,6 +169,68 @@
                         </Style>
                     </TextBox.Styles>
                 </TextBox>
+
+                <!-- Sync Progress Panel - Balloons (only visible when syncing AND expanded) -->
+                <StackPanel Orientation="Horizontal" 
+                            Spacing="10" 
+                            HorizontalAlignment="Center"
+                            Margin="0,8,0,0">
+                    <StackPanel.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                            <Binding Path="IsSyncPanelVisible"/>
+                            <Binding Path="IsSyncPanelExpanded"/>
+                        </MultiBinding>
+                    </StackPanel.IsVisible>
+                    
+                    <!-- Game List Balloon -->
+                    <Border Background="#1a2a3a" BorderBrush="#2a3f54" BorderThickness="2" CornerRadius="8" Padding="10,6">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="List" FontSize="11" FontWeight="SemiBold" Foreground="#8395a7" VerticalAlignment="Center"/>
+                                <ProgressBar Width="80" Height="4" Minimum="0" Maximum="{Binding GameListTotal}" Value="{Binding GameListCurrent}" Foreground="#537a97" Background="#0d1419" VerticalAlignment="Center" IsVisible="{Binding !GameListCompleted}"/>
+                                <StackPanel Orientation="Horizontal" IsVisible="{Binding !GameListCompleted}">
+                                    <TextBlock Text="{Binding GameListCurrent}" FontSize="11" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                                    <TextBlock Text="/" FontSize="11" Foreground="#8395a7" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding GameListTotal}" FontSize="11" Foreground="#8395a7" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <PathIcon Data="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.485z" 
+                                          Foreground="#537a97" Width="10" Height="10" 
+                                          VerticalAlignment="Center" IsVisible="{Binding GameListCompleted}"/>
+                            </StackPanel>
+                    </Border>
+                    
+                                    <!-- Images Balloon -->
+                    <Border Background="#1a2a3a" BorderBrush="#2a3f54" BorderThickness="2" CornerRadius="8" Padding="10,6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Images" FontSize="11" FontWeight="SemiBold" Foreground="#8395a7" VerticalAlignment="Center"/>
+                            <ProgressBar Width="80" Height="4" Minimum="0" Maximum="{Binding ImagesTotal}" Value="{Binding ImagesCurrent}" Foreground="#537a97" Background="#0d1419" VerticalAlignment="Center" IsVisible="{Binding !ImagesCompleted}"/>
+                            <StackPanel Orientation="Horizontal" IsVisible="{Binding !ImagesCompleted}">
+                                <TextBlock Text="{Binding ImagesCurrent}" FontSize="11" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                                <TextBlock Text="/" FontSize="11" Foreground="#8395a7" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding ImagesTotal}" FontSize="11" Foreground="#8395a7" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <PathIcon Data="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.485z" 
+                                      Foreground="#537a97" Width="10" Height="10" 
+                                      VerticalAlignment="Center" IsVisible="{Binding ImagesCompleted}"/>
+                        </StackPanel>
+                   </Border>
+                    
+                    <!-- Descriptions Balloon -->
+                  <Border Background="#1a2a3a" BorderBrush="#2a3f54" BorderThickness="2" CornerRadius="8" Padding="10,6">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="Descriptions" FontSize="11" FontWeight="SemiBold" Foreground="#8395a7" VerticalAlignment="Center"/>
+                        <ProgressBar Width="80" Height="4" Minimum="0" Maximum="{Binding DescriptionsTotal}" Value="{Binding DescriptionsCurrent}" Foreground="#537a97" Background="#0d1419" VerticalAlignment="Center" IsVisible="{Binding !DescriptionsCompleted}"/>
+                        <StackPanel Orientation="Horizontal" IsVisible="{Binding !DescriptionsCompleted}">
+                            <TextBlock Text="{Binding DescriptionsCurrent}" FontSize="11" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                            <TextBlock Text="/" FontSize="11" Foreground="#8395a7" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding DescriptionsTotal}" FontSize="11" Foreground="#8395a7" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <PathIcon Data="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.485z" 
+                                  Foreground="#537a97" Width="10" Height="10" 
+                                  VerticalAlignment="Center" IsVisible="{Binding DescriptionsCompleted}"/>
+                    </StackPanel>
+                </Border>
+                </StackPanel>
+                
                 
                 <!-- Error Message Display -->
                 <Border Background="#c23616" 
@@ -243,5 +305,26 @@
         <Panel Grid.Row="0" Grid.RowSpan="2" IsVisible="{Binding IsGameDetailsOpen}">
             <views:GameDetailsView DataContext="{Binding CurrentDetails}" />
         </Panel>
+
+        <!-- Floating Toggle Button for Sync Panel -->
+        <Button Grid.Row="0" 
+                Width="24" Height="24" 
+                Background="#1a2a3a" 
+                BorderBrush="#537a97" 
+                BorderThickness="0" 
+                CornerRadius="4" 
+                Padding="0" 
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,164,30,5"
+                Command="{Binding ToggleSyncPanelCommand}" 
+                ToolTip.Tip="Toggle sync details" 
+                Cursor="Hand"
+                IsVisible="{Binding IsSyncPanelVisible}">
+            <Panel>
+                <TextBlock Text="▲" FontSize="11" Foreground="#537a97" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding IsSyncPanelExpanded}"/>
+                <TextBlock Text="▼" FontSize="11" Foreground="#537a97" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding !IsSyncPanelExpanded}"/>
+            </Panel>
+        </Button>
     </Grid>
 </UserControl>
