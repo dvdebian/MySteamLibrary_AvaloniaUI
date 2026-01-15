@@ -59,6 +59,25 @@
     <Setter Property="Background" Value="#245266"/>
     <Setter Property="Foreground" Value="#FFFFFF"/>
 </Style>
+        <!-- Combobox style -->
+        <Style Selector="ComboBox:pointerover">
+    <Setter Property="BorderBrush" Value="#2a3f54" />
+</Style>
+
+<Style Selector="ComboBox:focus /template/ Border#Background">
+    <Setter Property="BorderBrush" Value="#2a3f54" />
+</Style>
+
+        <Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="#537a97"/>
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+        <Style Selector="ComboBoxItem">
+      
+        <Setter Property="Foreground" Value="#828488"/>
+    </Style>
+
+   
     </UserControl.Styles>
 
     <UserControl.DataTemplates>
@@ -231,6 +250,53 @@
                 </Border>
                 </StackPanel>
                 
+
+                <!-- Filter Row: Show Played + Sort -->
+                <Grid Margin="0,0,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Checkbox: Show only played games -->
+                    <CheckBox Grid.Column="0"
+                              IsChecked="{Binding ShowOnlyPlayedGames}"
+                              Content="Show only played games"
+                              FontSize="12"
+                              Foreground="#8395a7"
+                              Margin="0,0,20,0">
+                        <CheckBox.Styles>
+                            <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
+                                <Setter Property="Background" Value="#537a97"/>
+                                <Setter Property="BorderBrush" Value="#537a97"/>
+                            </Style>
+                        </CheckBox.Styles>
+                    </CheckBox>
+                  
+                    
+                    <!-- Sort dropdown -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="Sort by:" 
+                                   FontSize="12" 
+                                   Foreground="#8395a7"
+                                   VerticalAlignment="Center"/>
+                        
+                        <ComboBox SelectedIndex="{Binding CurrentSortModeIndex}"
+                                  MinWidth="140"
+                                  FontSize="12"
+                                  Background="#101a24"
+                                  Foreground="#828488"
+                                  BorderBrush="#2a3f54"
+                                  BorderThickness="1"                                 
+                                  CornerRadius="4"
+                                  Padding="8,4">
+                            <ComboBoxItem Content="Alphabetical"/>
+                            <ComboBoxItem Content="Play Time"/>
+                            <ComboBoxItem Content="App ID"/>                         
+                        </ComboBox>
+                    </StackPanel>
+                 </Grid> 
                 
                 <!-- Error Message Display -->
                 <Border Background="#c23616" 

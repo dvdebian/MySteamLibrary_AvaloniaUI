@@ -69,6 +69,33 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private SortCriteria _currentSortMode = SortCriteria.Alphabetical;
 
+
+    /// <summary>
+    /// Computed properties for sort mode button states
+    /// </summary>
+    public bool IsSortAlphabetical => CurrentSortMode == SortCriteria.Alphabetical;
+    public bool IsSortPlayTime => CurrentSortMode == SortCriteria.PlayTime;
+    public bool IsSortAppId => CurrentSortMode == SortCriteria.AppId;
+
+    /// <summary>
+    /// ComboBox selected index for sorting (0=Alphabetical, 1=PlayTime, 2=AppId)
+    /// </summary>
+    [ObservableProperty]
+    private int _currentSortModeIndex = 0;
+
+    /// <summary>
+    /// Called when the sort dropdown selection changes
+    /// </summary>
+    partial void OnCurrentSortModeIndexChanged(int value)
+    {
+        CurrentSortMode = value switch
+        {
+            1 => SortCriteria.PlayTime,
+            2 => SortCriteria.AppId,
+            _ => SortCriteria.Alphabetical
+        };
+        ApplyFilteringAndSorting();
+    }
     /// <summary>
     /// Configuration and user credentials logic.
     /// Declared as a property so it is accessible throughout the class and to the UI.
@@ -100,6 +127,10 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isCoverMode;
 
+
+    // Filter: Show only played games
+    [ObservableProperty]
+    private bool _showOnlyPlayedGames;
 
     // Sync Progress Tracking Properties
     [ObservableProperty]
@@ -186,6 +217,14 @@ public partial class MainViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Automatically called when ShowOnlyPlayedGames property changes.
+    /// </summary>
+    partial void OnShowOnlyPlayedGamesChanged(bool value)
+    {
+        ApplyFilteringAndSorting();
+    }
+
+    /// <summary>
     /// Called automatically when ActiveView changes to notify UI about IsCarouselMode.
     /// </summary>
     partial void OnActiveViewChanged(LibraryPresenterViewModel value)
@@ -227,6 +266,12 @@ public partial class MainViewModel : ViewModelBase
         var filtered = string.IsNullOrWhiteSpace(SearchText)
             ? _masterLibrary
             : _masterLibrary.Where(g => g.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+
+        // Step 1.5: Filter by Played Games (if enabled)
+        if (ShowOnlyPlayedGames)
+        {
+            filtered = filtered.Where(g => g.PlaytimeMinutes > 0);
+        }
 
         // Step 2: Order the filtered results
         var sorted = CurrentSortMode switch
@@ -283,7 +328,7 @@ public partial class MainViewModel : ViewModelBase
         {
             IsRefreshing = true;
             ErrorMessage = string.Empty; // Clear any previous error messages
-     
+
 
             // Reset sync progress
             GameListCompleted = false;
@@ -493,6 +538,9 @@ public partial class MainViewModel : ViewModelBase
     public void ChangeSortMode(SortCriteria newCriteria)
     {
         CurrentSortMode = newCriteria;
+        OnPropertyChanged(nameof(IsSortAlphabetical));
+        OnPropertyChanged(nameof(IsSortPlayTime));
+        OnPropertyChanged(nameof(IsSortAppId));
         ApplyFilteringAndSorting();
     }
 
