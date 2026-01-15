@@ -82,7 +82,7 @@
 
     <Grid x:Name="MainGrid">
         <!-- Blurred Background -->
-        <Grid x:Name="BackgroundLayer" ClipToBounds="True">
+        <Grid x:Name="BackgroundLayer" ClipToBounds="False">
             <Image x:Name="BackgroundImage"
                    Source="{Binding CurrentSelectedGame.ImagePath, RelativeSource={RelativeSource AncestorType=views:CarouselView}, Converter={StaticResource VariableImageConverter}}"
                    Stretch="UniformToFill"
@@ -151,7 +151,7 @@
                                             Background="#2a2e33" 
                                             VerticalAlignment="Center"
                                             CornerRadius="12" 
-                                            ClipToBounds="True" 
+                                            ClipToBounds="False" 
                                             PointerPressed="OnCoverClicked">
                                         
                                         <Border.RenderTransformOrigin>50%,50%</Border.RenderTransformOrigin>

@@ -160,7 +160,7 @@ namespace MySteamLibrary.Services
                 return new List<GameModel>();
             }
 
-            string url = $"https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={apiKey}&steamid={steamId}&include_appinfo=true&format=json";
+            string url = $"https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={apiKey}&steamid={steamId}&include_appinfo=true&format=json&include_played_free_games=1&skip_unvetted_apps=false";
 
             try
             {

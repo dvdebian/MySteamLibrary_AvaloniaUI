@@ -89,6 +89,18 @@ public partial class MainViewModel : ViewModelBase
     public bool IsCarouselMode => ActiveView == _carouselView;
 
     /// <summary>
+    /// Mode tracking properties for button state visualization
+    /// </summary>
+    [ObservableProperty]
+    private bool _isListMode = true; // Start in List mode by default
+
+    [ObservableProperty]
+    private bool _isGridMode;
+
+    [ObservableProperty]
+    private bool _isCoverMode;
+
+    /// <summary>
     /// Returns true when there are no games in the library.
     /// Used to show the "No data found" message.
     /// </summary>
@@ -282,6 +294,12 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     public void SelectMode(string mode)
     {
+        // Reset all mode flags
+        IsListMode = false;
+        IsGridMode = false;
+        IsCoverMode = false;
+
+        // Set active view and corresponding flag
         ActiveView = mode switch
         {
             "Grid" => _gridView,
@@ -289,6 +307,23 @@ public partial class MainViewModel : ViewModelBase
             "Carousel" => _carouselView,
             _ => _listView
         };
+
+        // Update the mode flag based on which view was selected
+        switch (mode)
+        {
+            case "Grid":
+                IsGridMode = true;
+                break;
+            case "Cover":
+                IsCoverMode = true;
+                break;
+            case "Carousel":
+                // IsCarouselMode is computed from ActiveView, no need to set a flag
+                break;
+            default: // "List"
+                IsListMode = true;
+                break;
+        }
 
         // If switching to a view that requires a centered anchor, auto-select the first game if none selected.
         if (mode == "Cover" || mode == "Carousel")

@@ -8,6 +8,59 @@
              x:Class="MySteamLibrary.Views.MainView"
              x:DataType="vm:MainViewModel">
 
+    <UserControl.Styles>
+        <!-- Base Nav Button Style -->
+        <Style Selector="Button.Nav">
+            <Setter Property="Background" Value="#101a24"/>
+            <Setter Property="Foreground" Value="#8395a7"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                    <BrushTransition Property="Foreground" Duration="0:0:0.2"/>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <!-- Hover State -->
+        <Style Selector="Button.Nav:pointerover">
+            <Setter Property="Background" Value="#2a3f54"/>
+            <Setter Property="Foreground" Value="#1a1a1a"/>
+        </Style>
+
+        <!-- Active/Selected State -->
+        <Style Selector="Button.Nav.Active">
+            <Setter Property="Background" Value="#537a97"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#537a97"/>
+            <Setter Property="BorderThickness" Value="0,0,0,0"/>
+        </Style>
+
+        <!-- Active button should stay highlighted on hover -->
+        <Style Selector="Button.Nav.Active:pointerover">
+            <Setter Property="Background" Value="#5ab0e8"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+        </Style>
+        <!-- Effect button  -->
+<Style Selector="Button.EffectButton">
+    <Setter Property="Background" Value="#1a3d52"/>  <!-- Blue-teal mix -->
+    <Setter Property="Foreground" Value="#42d9ff"/>  <!-- Bright aqua -->
+    <Setter Property="BorderBrush" Value="#42d9ff"/>
+    <Setter Property="BorderThickness" Value="1"/>
+</Style>
+
+<Style Selector="Button.EffectButton:pointerover">
+    <Setter Property="Background" Value="#245266"/>
+    <Setter Property="Foreground" Value="#FFFFFF"/>
+</Style>
+    </UserControl.Styles>
+
     <UserControl.DataTemplates>
         <DataTemplate DataType="{x:Type vm:ListViewModel}">
             <views:ListView />
@@ -36,13 +89,32 @@
                 <Grid ColumnDefinitions="*, Auto">
                     
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="5">
-                        <Button Classes="Nav" Content="LIST" Command="{Binding SelectModeCommand}" CommandParameter="List" />
-                        <Button Classes="Nav" Content="GRID" Command="{Binding SelectModeCommand}" CommandParameter="Grid" />
-                        <Button Classes="Nav" Content="COVER" Command="{Binding SelectModeCommand}" CommandParameter="Cover" />
-                        <Button Classes="Nav" Content="CAROUSEL" Command="{Binding SelectModeCommand}" CommandParameter="Carousel" />
+                        <Button Content="LIST" 
+                                Classes="Nav"
+                                Classes.Active="{Binding IsListMode}"
+                                Command="{Binding SelectModeCommand}" 
+                                CommandParameter="List"/>
+
+                        <Button Content="GRID" 
+                                Classes="Nav"
+                                Classes.Active="{Binding IsGridMode}"
+                                Command="{Binding SelectModeCommand}" 
+                                CommandParameter="Grid"/>
+
+                        <Button Content="COVER" 
+                                Classes="Nav"
+                                Classes.Active="{Binding IsCoverMode}"
+                                Command="{Binding SelectModeCommand}" 
+                                CommandParameter="Cover"/>
+
+                        <Button Content="CAROUSEL" 
+                                Classes="Nav"
+                                Classes.Active="{Binding IsCarouselMode}"
+                                Command="{Binding SelectModeCommand}" 
+                                CommandParameter="Carousel"/>
                         
                         <!-- Effect Button (only visible in Carousel mode) -->
-                        <Button Classes="Nav" 
+                        <Button Classes="Nav EffectButton" 
                                 Content="EFFECT" 
                                 Click="OnEffectButtonClicked"
                                 IsVisible="{Binding IsCarouselMode}"/>
@@ -77,13 +149,26 @@
                     </StackPanel>
                 </Grid>
                 
-                <TextBox Watermark="SEARCH" 
+                   <TextBox Watermark="🔍 SEARCH GAMES..." 
                          Text="{Binding SearchText}" 
-                         MaxWidth="400" 
-                         HorizontalAlignment="Left"
-                         Background="#101a24"
-                         BorderThickness="0"
-                         CornerRadius="2"/>
+                         HorizontalAlignment="Stretch"
+                         Background="#0d1419"
+                         BorderBrush="#2a3f54"
+                         BorderThickness="2"
+                         CornerRadius="8"
+                         Padding="14,10"
+                         FontSize="13"
+                         Foreground="White">
+                    <TextBox.Styles>
+                        <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+                            <Setter Property="BorderBrush" Value="#2a3f54"/>
+                            <Setter Property="Background" Value="#0d1419"/>
+                        </Style>
+                        <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                            <Setter Property="BorderBrush" Value="#537a97"/>
+                        </Style>
+                    </TextBox.Styles>
+                </TextBox>
                 
                 <!-- Error Message Display -->
                 <Border Background="#c23616" 
