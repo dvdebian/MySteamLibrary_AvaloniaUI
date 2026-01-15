@@ -19,6 +19,7 @@ namespace MySteamLibrary.Services
         private readonly string _cacheFolder;
         private readonly string _metadataFile;
         private readonly HttpClient _httpClient;
+        private readonly string _syncStateFile;
 
         // Semaphore to ensure only one thread writes to the JSON file at a time
         private static readonly SemaphoreSlim _fileLock = new SemaphoreSlim(1, 1);
@@ -42,6 +43,7 @@ namespace MySteamLibrary.Services
             // _cacheFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cache");
 
             _metadataFile = Path.Combine(_cacheFolder, "library_cache.json");
+            _syncStateFile = Path.Combine(_cacheFolder, "sync_state.json");
 
             // LOG THE ACTUAL PATHS FOR DEBUGGING
             System.Diagnostics.Debug.WriteLine("╔════════════════════════════════════════════════════════╗");
@@ -296,6 +298,58 @@ namespace MySteamLibrary.Services
             {
                 return (0, 0);
             }
+        }
+
+        /// <summary>
+        /// Saves the global sync completion state
+        /// </summary>
+        public async Task SaveSyncStateAsync(bool isFullySynced)
+        {
+            try
+            {
+                EnsureCacheDirectoryExists();
+                var state = new { IsFullySynced = isFullySynced, LastUpdate = DateTime.Now };
+                var options = new JsonSerializerOptions { WriteIndented = true };
+                var json = JsonSerializer.Serialize(state, options);
+                await File.WriteAllTextAsync(_syncStateFile, json);
+                System.Diagnostics.Debug.WriteLine($"✅ Sync state saved: IsFullySynced={isFullySynced}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error saving sync state: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Loads the global sync completion state
+        /// Returns false if file doesn't exist or sync is incomplete
+        /// </summary>
+        public async Task<bool> LoadSyncStateAsync()
+        {
+            try
+            {
+                if (!File.Exists(_syncStateFile))
+                {
+                    System.Diagnostics.Debug.WriteLine($"ℹ️  No sync state file found (sync incomplete or first run)");
+                    return false;
+                }
+
+                var json = await File.ReadAllTextAsync(_syncStateFile);
+                var state = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+
+                if (state != null && state.ContainsKey("IsFullySynced"))
+                {
+                    bool isFullySynced = state["IsFullySynced"].GetBoolean();
+                    System.Diagnostics.Debug.WriteLine($"✅ Sync state loaded: IsFullySynced={isFullySynced}");
+                    return isFullySynced;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error loading sync state: {ex.Message}");
+            }
+
+            return false;
         }
     }
 }

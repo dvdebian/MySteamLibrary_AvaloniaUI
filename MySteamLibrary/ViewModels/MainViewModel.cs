@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MySteamLibrary.Models;
@@ -162,9 +163,9 @@ public partial class MainViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _descriptionsCompleted;
-    // Sync panel collapse/expand state
+    // Filter/Sync area collapse/expand state (controls visibility of both filter row and sync progress)
     [ObservableProperty]
-    private bool _isSyncPanelExpanded = true;
+    private bool _isSyncPanelExpanded = false;
     /// <summary>
     /// Returns true when there are no games in the library.
     /// Used to show the "No data found" message.
@@ -234,6 +235,7 @@ public partial class MainViewModel : ViewModelBase
 
     /// <summary>
     /// Loads the library from the local JSON cache to provide an instant startup experience.
+    /// If sync was incomplete, automatically resumes it with visible progress panel.
     /// </summary>
     private async Task InitializeLibraryAsync()
     {
@@ -248,6 +250,44 @@ public partial class MainViewModel : ViewModelBase
 
                 // Refresh the visible collection based on current sort/filter
                 ApplyFilteringAndSorting();
+
+                // Check if previous sync was incomplete
+                bool isFullySynced = await _cacheService.LoadSyncStateAsync();
+
+                if (!isFullySynced && _masterLibrary.Count > 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("🔄 Previous sync incomplete - auto-resuming...");
+
+                    // Calculate current progress
+                    int gamesWithImages = _masterLibrary.Count(g => !string.IsNullOrEmpty(g.ImagePath) && File.Exists(g.ImagePath));
+                    int gamesWithDescriptions = _masterLibrary.Count(g =>
+                        !string.IsNullOrWhiteSpace(g.Description) &&
+                        g.Description != "Loading description..." &&
+                        g.Description != "No description available.");
+
+                    // Set up sync panel
+                    GameListTotal = _masterLibrary.Count;
+                    GameListCurrent = _masterLibrary.Count;
+                    GameListCompleted = true;
+
+                    ImagesTotal = _masterLibrary.Count;
+                    ImagesCurrent = gamesWithImages;
+                    ImagesCompleted = (gamesWithImages == _masterLibrary.Count);
+
+                    DescriptionsTotal = _masterLibrary.Count;
+                    DescriptionsCurrent = gamesWithDescriptions;
+                    DescriptionsCompleted = (gamesWithDescriptions == _masterLibrary.Count);
+
+
+                    // Show sync panel (user can expand manually with toggle button)
+                    IsSyncPanelVisible = true;
+                    await _cacheService.SaveSyncStateAsync(false); // Mark sync as incomplete
+
+                    System.Diagnostics.Debug.WriteLine($"📊 Resume progress: Images {ImagesCurrent}/{ImagesTotal}, Descriptions {DescriptionsCurrent}/{DescriptionsTotal}");
+
+                    // Resume background sync
+                    _ = Task.Run(() => BackgroundUpdateDataAsync());
+                }
             }
         }
         catch (Exception ex)
@@ -423,8 +463,13 @@ public partial class MainViewModel : ViewModelBase
                 }
             }
 
+
             DescriptionsCompleted = true;
             await _cacheService.SaveLibraryCacheAsync(_masterLibrary);
+
+            // Mark sync as fully complete
+            await _cacheService.SaveSyncStateAsync(true);
+            System.Diagnostics.Debug.WriteLine("✅ Full sync completed!");
 
             // Hide sync panel after 3 seconds
             await Task.Delay(3000);
@@ -433,9 +478,10 @@ public partial class MainViewModel : ViewModelBase
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error in background update: {ex.Message}");
+            // Mark sync as incomplete so it resumes on next startup
+            await _cacheService.SaveSyncStateAsync(false);
         }
     }
-    /// <summary>
     /// Switches the active view mode and ensures a selection exists for centering-based views.
     /// </summary>
     [RelayCommand]
