@@ -164,10 +164,10 @@ public partial class MainViewModel : ViewModelBase
     // Filter/Sync area collapse/expand state (controls visibility of both filter row and sync progress)
     [ObservableProperty]
     private bool _isSyncPanelExpanded = false;
-    /// <summary>
-    /// Returns true when there are no games in the library.
-    /// Used to show the "No data found" message.
-    /// </summary>
+
+    // Example: If 'IsSyncPanelExpanded' is false, always show 0. 
+    // Otherwise, show the actual count.
+   
     public bool HasNoData => _allGames.Count == 0;
 
     // The collection bound to all UI views (List, Grid, etc.)
@@ -275,20 +275,22 @@ public partial class MainViewModel : ViewModelBase
 
                 if (!isFullySynced && _masterLibrary.Count > 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("🔄 Previous sync incomplete - auto-resuming...");
-
+                    System.Diagnostics.Debug.WriteLine("🔄 Previous sync incomplete - auto-resuming...");                  
                     // Show sync panel (user can expand manually with toggle button)
                     IsSyncPanelVisible = true;
                     await _cacheService.SaveSyncStateAsync(false); // Mark sync as incomplete
 
-                    System.Diagnostics.Debug.WriteLine($"📊 Resume progress: Images {ImagesCurrent}/{ImagesTotal}, Descriptions {DescriptionsCurrent}/{DescriptionsTotal}");
+                    System.Diagnostics.Debug.WriteLine($"📊 Resume progress: Images {ImagesCurrent}/{ImagesTotal}, Descriptions {DescriptionsCurrent}/{DescriptionsTotal} , Master {_masterLibrary.Count}");
 
                     // Resume background sync
                     _ = Task.Run(() => BackgroundUpdateDataAsync());
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"✅ Sync complete: Images {ImagesCurrent}/{ImagesTotal}, Descriptions {DescriptionsCurrent}/{DescriptionsTotal}");
+
+                    DescriptionsCurrent = _masterLibrary.Count;
+                    ImagesCurrent = _masterLibrary.Count;
+                    System.Diagnostics.Debug.WriteLine($"✅ Sync complete: Images {ImagesCurrent}/{ImagesTotal}, Descriptions {DescriptionsCurrent}/{DescriptionsTotal}, Master {_masterLibrary.Count}");
                     // Keep IsSyncPanelVisible = false (no active sync)
                 }
             }
@@ -605,6 +607,9 @@ public partial class MainViewModel : ViewModelBase
     {
         _masterLibrary.Clear();
         _allGames.Clear();
+        ImagesCurrent = 0;
+        DescriptionsCurrent = 0;
+        GameListCurrent = 0;
         SelectedGame = null;
         OnPropertyChanged(nameof(HasNoData));
         System.Diagnostics.Debug.WriteLine("All game data cleared from memory");

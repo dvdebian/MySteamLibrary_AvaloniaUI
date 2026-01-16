@@ -9,6 +9,7 @@
              x:DataType="vm:MainViewModel">
 
     <UserControl.Styles>
+      
         <!-- Base Nav Button Style -->
         <Style Selector="Button.Nav">
             <Setter Property="Background" Value="#101a24"/>
@@ -280,7 +281,7 @@
                                     Width="24" Height="24" 
                                     Background="#101a24" 
                                     BorderBrush="#537a97" 
-                                    BorderThickness="1" 
+                                    BorderThickness="1"                                   
                                     CornerRadius="4" 
                                     Padding="0" 
                                     Command="{Binding ToggleSyncPanelCommand}" 
