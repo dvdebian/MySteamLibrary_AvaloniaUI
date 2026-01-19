@@ -36,32 +36,46 @@ namespace MySteamLibrary.Services
         /// </summary>
         public async Task<List<GameModel>> GetLibrarySkeletonAsync()
         {
-            // 1. Try to load from local cache first
-            var cachedGames = await _cacheService.LoadLibraryCacheAsync();
+            // 1. Always load the local cache first to get our saved descriptions/images
+            var cachedGames = await _cacheService.LoadLibraryCacheAsync() ?? new List<GameModel>();
 
-            if (cachedGames != null && cachedGames.Any())
+            // 2. Always fetch the latest data from Steam to check for new games or playtime updates
+            var apiGames = await FetchOwnedGamesFromApiAsync();
+
+            // If the API call fails (e.g., no internet), fall back to whatever is in the cache
+            if (apiGames == null || !apiGames.Any())
             {
-                // Ensure cached games with missing descriptions show the "Loading..." text
-                foreach (var game in cachedGames)
-                {
-                    if (string.IsNullOrWhiteSpace(game.Description))
-                    {
-                        game.Description = "Loading description...";
-                    }
-                }
                 return cachedGames;
             }
 
-            // 2. Fetch the list from Steam Web API if no cache exists
-            var apiGames = await FetchOwnedGamesFromApiAsync();
+            // Create a dictionary of the cache for fast lookup (searching by AppId)
+            var cachedDict = cachedGames.ToDictionary(g => g.AppId, g => g);
+            var updatedList = new List<GameModel>();
 
-            // Initialize new API games with the loading state
-            foreach (var game in apiGames)
+            // 3. Compare the API results with our Cache
+            foreach (var apiGame in apiGames)
             {
-                game.Description = "Loading description...";
+                if (cachedDict.TryGetValue(apiGame.AppId, out var existingGame))
+                {
+                    // The game exists in cache! Update only the playtime.
+                    existingGame.PlaytimeMinutes = apiGame.PlaytimeMinutes;
+
+                    // We keep the 'existingGame' because it already has the 
+                    // Description and ImagePath saved from before.
+                    updatedList.Add(existingGame);
+                }
+                else
+                {
+                    // This is a brand new game not in our cache.
+                    apiGame.Description = "Loading description...";
+                    updatedList.Add(apiGame);
+                }
             }
 
-            return apiGames;
+            // 4. Save the merged results back to the disk
+            await _cacheService.SaveLibraryCacheAsync(updatedList);
+
+            return updatedList;
         }
 
         /// <summary>
