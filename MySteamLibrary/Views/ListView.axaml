@@ -37,7 +37,7 @@
         </Style>
 
         <Style Selector="ListBoxItem:pointerover Border.GameRow">
-            <Setter Property="Background" Value="#3367c1f5"/>
+            <Setter Property="Background" Value="#3a4d5d"/>
         </Style>
 
         <Style Selector="TextBlock.DescriptionText[Text=Loading description...]">

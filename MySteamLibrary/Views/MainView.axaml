@@ -11,29 +11,10 @@
     <UserControl.Styles>
       
         <!-- Base Nav Button Style -->
-        <Style Selector="Button.Nav">
-            <Setter Property="Background" Value="#101a24"/>
-            <Setter Property="Foreground" Value="#8395a7"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="Padding" Value="15,8"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
-                    <BrushTransition Property="Foreground" Duration="0:0:0.2"/>
-                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
-                </Transitions>
-            </Setter>
-        </Style>
+       
 
         <!-- Hover State -->
-        <Style Selector="Button.Nav:pointerover">
-            <Setter Property="Background" Value="#2a3f54"/>
-            <Setter Property="Foreground" Value="#1a1a1a"/>
-        </Style>
+       
 
         <!-- Active/Selected State -->
         <Style Selector="Button.Nav.Active">
@@ -49,25 +30,25 @@
             <Setter Property="Foreground" Value="#FFFFFF"/>
         </Style>
         <!-- Effect button  -->
-<Style Selector="Button.EffectButton">
-    <Setter Property="Background" Value="#1a3d52"/>  <!-- Blue-teal mix -->
-    <Setter Property="Foreground" Value="#42d9ff"/>  <!-- Bright aqua -->
-    <Setter Property="BorderBrush" Value="#42d9ff"/>
-    <Setter Property="BorderThickness" Value="1"/>
-</Style>
+        <Style Selector="Button.EffectButton">
+            <Setter Property="Background" Value="#1a3d52"/>  <!-- Blue-teal mix -->
+            <Setter Property="Foreground" Value="#42d9ff"/>  <!-- Bright aqua -->
+            <Setter Property="BorderBrush" Value="#42d9ff"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>      
 
-<Style Selector="Button.EffectButton:pointerover">
-    <Setter Property="Background" Value="#245266"/>
-    <Setter Property="Foreground" Value="#FFFFFF"/>
-</Style>
+        <Style Selector="Button.EffectButton:pointerover">
+            <Setter Property="Background" Value="#245266"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+        </Style>
         <!-- Combobox style -->
         <Style Selector="ComboBox:pointerover">
-    <Setter Property="BorderBrush" Value="#2a3f54" />
-</Style>
+            <Setter Property="BorderBrush" Value="#2a3f54" />
+        </Style>
 
-<Style Selector="ComboBox:focus /template/ Border#Background">
-    <Setter Property="BorderBrush" Value="#2a3f54" />
-</Style>
+        <Style Selector="ComboBox:focus /template/ Border#Background">
+            <Setter Property="BorderBrush" Value="#2a3f54" />
+        </Style>
 
         <Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
         <Setter Property="Background" Value="#537a97"/>
