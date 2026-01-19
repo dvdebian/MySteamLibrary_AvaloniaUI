@@ -1,4 +1,4 @@
-<Application xmlns="https://github.com/avaloniaui"
+﻿<Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="MySteamLibrary.App"
              xmlns:local="using:MySteamLibrary"
@@ -9,11 +9,13 @@
     </Application.DataTemplates>
 
     <Application.Resources>
-        <SolidColorBrush x:Key="SteamDarkBg">#171a21</SolidColorBrush>
-        <SolidColorBrush x:Key="SteamHeaderBg">#1b2838</SolidColorBrush>
+        <SolidColorBrush x:Key="SteamDarkBg">#203344</SolidColorBrush>
+        <SolidColorBrush x:Key="SteamHeaderBg">#171d25</SolidColorBrush>
         <SolidColorBrush x:Key="SteamBlueAccent">#3a4d5d</SolidColorBrush>
         <SolidColorBrush x:Key="SteamButtonDefault">#2a475e</SolidColorBrush>
         <SolidColorBrush x:Key="SteamButtonHeaderBg">#101a24</SolidColorBrush>
+        <SolidColorBrush x:Key="SteamMainBg">#101a24</SolidColorBrush>
+
            
     </Application.Resources>
   
@@ -21,27 +23,32 @@
         <FluentTheme />
 
         <Style Selector="Button.Nav">
-            <Setter Property="Background" Value="{StaticResource SteamButtonHeaderBg}"/>
-            <Setter Property="Foreground" Value="#8395a7"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#dcdedf"/>
             <Setter Property="CornerRadius" Value="2"/>
             <Setter Property="Padding" Value="15,8"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
-                </Transitions>
-            </Setter>
+           
         </Style>
         
-        <Style Selector="Button.Nav:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource SteamBlueAccent}"/>
+        <Style Selector="Button.Nav:not(.Active):pointerover /template/ ContentPresenter">
+            <!--Setter Property="Background" Value="{StaticResource SteamBlueAccent}"/-->
+             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="White"/>
         </Style>
+        <Style Selector="Button.Nav.Active:pointerover /template/ ContentPresenter">
+            <!--Setter Property="Background" Value="{StaticResource SteamBlueAccent}"/-->
+             <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="#1a8ee3"/>
+                <Setter Property="BorderBrush" Value="#1a8ee3"/>
+                <Setter Property="BorderThickness" Value="0,0,0,4"/>
+        </Style>
+       
 
         <Style Selector="Button.GameItem">
-            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Background" Value="#172432"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
@@ -55,6 +62,14 @@
         <Style Selector="Button.GameItem:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="#2a475e"/>
         </Style>
+
+
+
+
+
+
+
+
         
     </Application.Styles>
 </Application>

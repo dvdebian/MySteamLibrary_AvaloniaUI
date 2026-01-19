@@ -16,48 +16,86 @@
         <!-- Hover State -->
        
 
-        <!-- Active/Selected State -->
-        <Style Selector="Button.Nav.Active">
+        <!-- Active/Selected State 1a8ee3  -->
+   <!--     <Style Selector="Button.Nav.Active">
             <Setter Property="Background" Value="#537a97"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="BorderBrush" Value="#537a97"/>
             <Setter Property="BorderThickness" Value="0,0,0,0"/>
-        </Style>
+        </Style>-->
+
+            <Style Selector="Button.Nav.Active">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="#1a8ee3"/>
+                <Setter Property="BorderBrush" Value="#1a8ee3"/>
+                <Setter Property="BorderThickness" Value="0,0,0,4"/>
+            </Style>
 
         <!-- Active button should stay highlighted on hover -->
-        <Style Selector="Button.Nav.Active:pointerover">
-            <Setter Property="Background" Value="#5ab0e8"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
-        </Style>
+       
+
+
+
         <!-- Effect button  -->
         <Style Selector="Button.EffectButton">
             <Setter Property="Background" Value="#1a3d52"/>  <!-- Blue-teal mix -->
             <Setter Property="Foreground" Value="#42d9ff"/>  <!-- Bright aqua -->
+          <Setter Property="BorderBrush" Value="#42d9ff"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>  
+  
+        <Style Selector="Button.EffectButton:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#3a4d5d"/>  
+            <Setter Property="Foreground" Value="White"/>  
             <Setter Property="BorderBrush" Value="#42d9ff"/>
-            <Setter Property="BorderThickness" Value="1"/>
-        </Style>      
-
-        <Style Selector="Button.EffectButton:pointerover">
-            <Setter Property="Background" Value="#245266"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
         </Style>
+
+     
         <!-- Combobox style -->
-        <Style Selector="ComboBox:pointerover">
-            <Setter Property="BorderBrush" Value="#2a3f54" />
+       
+    
+
+        <!-- Combo Box selected item style-->
+          <Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
+              <Setter Property="Foreground" Value="#d5dcde"/>
+            <Setter Property="Background" Value="#3d4450"/> 
         </Style>
 
-        <Style Selector="ComboBox:focus /template/ Border#Background">
+             <!-- Combo Box hover item style-->
+        <Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#dcdedf"/>
+            <Setter Property="Foreground" Value="#181f29"/>
+        </Style>
+        <Style Selector="ComboBoxItem:selected:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#dcdedf"/>
+            <Setter Property="Foreground" Value="#181f29"/>
+        </Style>
+          
+        <!-- Combo Box general list style-->
+        <Style Selector="ComboBoxItem">      
+            <Setter Property="Foreground" Value="#d5dcde"/>
+            <Setter Property="Background" Value="#3d4450"/>            
+         </Style>
+        <!-- Combo Box closed list style  #d5dcde-->
+         <Style Selector="ComboBox">
+            <Setter Property="Foreground" Value="#d5dcde"/>
+        </Style>
+        <Style Selector="ComboBox:pointerover /template/ Border#Background">
             <Setter Property="BorderBrush" Value="#2a3f54" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="#364352" />
         </Style>
 
-        <Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
-        <Setter Property="Background" Value="#537a97"/>
-        <Setter Property="Foreground" Value="White"/>
-    </Style>
-        <Style Selector="ComboBoxItem">
-      
-        <Setter Property="Foreground" Value="#828488"/>
-    </Style>
+
+
+
+
+
+
 
    
     </UserControl.Styles>
@@ -92,7 +130,7 @@
                     <Run Text=" GAMES" FontWeight="Light" FontSize="12"  Foreground="#AAFFFFFF"/>
                     </TextBlock>
                 
-                <Grid ColumnDefinitions="*, Auto">
+                <Grid ColumnDefinitions="*, Auto" Background="{StaticResource SteamHeaderBg}">
                     
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="5">
                         <Button Content="LIST" 
@@ -120,7 +158,7 @@
                                 CommandParameter="Carousel"/>
                         
                         <!-- Effect Button (only visible in Carousel mode) -->
-                        <Button Classes="Nav EffectButton" 
+                        <Button Classes="EffectButton" 
                                 Content="EFFECT" 
                                 Click="OnEffectButtonClicked"
                                 IsVisible="{Binding IsCarouselMode}"/>
@@ -153,8 +191,8 @@
                     <TextBox Watermark="🔍 SEARCH GAMES..." 
                              Text="{Binding SearchText}" 
                              HorizontalAlignment="Stretch"
-                             Background="#0d1419"
-                             BorderBrush="#2a3f54"
+                             Background="#364352"
+                             BorderBrush="#515b67"
                              BorderThickness="2"
                              CornerRadius="8"
                              Padding="14,10,45,10"
@@ -162,12 +200,18 @@
                              Foreground="White">
                         <TextBox.Styles>
                             <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
-                                <Setter Property="BorderBrush" Value="#2a3f54"/>
-                                <Setter Property="Background" Value="#0d1419"/>
+                                <Setter Property="BorderBrush" Value="#537a97"/>
+                                <Setter Property="Background" Value="#364352"/>
+                            </Style>
+                            <Style Selector="TextBox.active:pointerover /template/ Border#PART_BorderElement">
+                                <Setter Property="BorderBrush" Value="red"/>
+                                <Setter Property="Background" Value="red"/>
                             </Style>
                             <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
-                                <Setter Property="BorderBrush" Value="#537a97"/>
+                                <Setter Property="BorderBrush" Value="#1a7ac1"/>
+                                <Setter Property="Background" Value="#242931"/>
                             </Style>
+
                         </TextBox.Styles>
                     </TextBox>
                     
@@ -202,7 +246,7 @@
 
 
                 <!-- Filter/Sync Area - Single Border Container -->
-                <Border Background="#1a2a3a"
+                <Border Background="#182636"
                         BorderBrush="#2a3f54"
                         BorderThickness="1"
                         CornerRadius="8"
@@ -245,8 +289,7 @@
                                 <ComboBox SelectedIndex="{Binding CurrentSortModeIndex}"
                                           MinWidth="140"
                                           FontSize="12"
-                                          Background="#101a24"
-                                          Foreground="#828488"
+                                         
                                           BorderBrush="#2a3f54"
                                           BorderThickness="1"
                                           CornerRadius="4"
