@@ -9,7 +9,7 @@
     </Application.DataTemplates>
 
     <Application.Resources>
-        <SolidColorBrush x:Key="SteamDarkBg">#203344</SolidColorBrush>
+        <SolidColorBrush x:Key="SteamDarkBg">#2b3039</SolidColorBrush>
         <SolidColorBrush x:Key="SteamHeaderBg">#171d25</SolidColorBrush>
         <SolidColorBrush x:Key="SteamBlueAccent">#3a4d5d</SolidColorBrush>
         <SolidColorBrush x:Key="SteamButtonDefault">#2a475e</SolidColorBrush>
@@ -60,7 +60,7 @@
         </Style>
 
         <Style Selector="Button.GameItem:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#2a475e"/>
+            <Setter Property="Background" Value="#323a4b"/>
         </Style>
 
 
