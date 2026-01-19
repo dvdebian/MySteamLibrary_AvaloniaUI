@@ -18,12 +18,14 @@
         <Style Selector="ListBox">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
+         
         </Style>
         
         <Style Selector="ListBoxItem">
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Margin" Value="20,0,20,12"/>
             <Setter Property="Background" Value="Transparent"/>
+            
         </Style>
 
         <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
@@ -37,13 +39,18 @@
         </Style>
 
         <Style Selector="ListBoxItem:pointerover Border.GameRow">
-            <Setter Property="Background" Value="#3a4d5d"/>
+            <Setter Property="Background" Value="#323a4b"/>
+            <Setter Property="CornerRadius" Value="8"/>
         </Style>
 
         <Style Selector="TextBlock.DescriptionText[Text=Loading description...]">
             <Setter Property="FontStyle" Value="Italic"/>
             <Setter Property="Opacity" Value="0.3"/>
         </Style>
+
+    <Style Selector="ListBoxItem Button">
+    <Setter Property="CornerRadius" Value="8"/>
+</Style>
     </UserControl.Styles>
 
     <ListBox ItemsSource="{Binding Games}" Padding="0,20,0,0" ClipToBounds="False">

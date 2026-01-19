@@ -24,7 +24,7 @@
 
         <Style Selector="Button.Nav">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#dcdedf"/>
+            <Setter Property="Foreground" Value="#dcdedf"/>           
             <Setter Property="CornerRadius" Value="2"/>
             <Setter Property="Padding" Value="15,8"/>
             <Setter Property="FontSize" Value="13"/>
@@ -60,7 +60,7 @@
         </Style>
 
         <Style Selector="Button.GameItem:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#323a4b"/>
+            <Setter Property="Background" Value="#2a475e"/>
         </Style>
 
 
