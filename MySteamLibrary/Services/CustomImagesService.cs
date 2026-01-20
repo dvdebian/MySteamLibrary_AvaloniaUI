@@ -27,7 +27,7 @@ namespace MySteamLibrary.Services
         {
             if (parentWindow == null)
             {
-                System.Diagnostics.Debug.WriteLine("⚠️  Cannot open file picker: Parent window is null");
+                //System.Diagnostics.Debug.WriteLine("⚠️  Cannot open file picker: Parent window is null");
                 return false;
             }
 
@@ -61,21 +61,21 @@ namespace MySteamLibrary.Services
                 // Check if user selected a file
                 if (files.Count == 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("ℹ️  User cancelled file selection");
+                    //System.Diagnostics.Debug.WriteLine("ℹ️  User cancelled file selection");
                     return false;
                 }
 
                 var selectedFile = files[0];
                 var sourcePath = selectedFile.Path.LocalPath;
 
-                System.Diagnostics.Debug.WriteLine($"📁 User selected: {sourcePath}");
+                //System.Diagnostics.Debug.WriteLine($"📁 User selected: {sourcePath}");
 
                 // Validate and save the image
                 return await ValidateAndSaveImageAsync(game, sourcePath);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ Error selecting custom image: {ex.Message}");
+                //System.Diagnostics.Debug.WriteLine($"❌ Error selecting custom image: {ex.Message}");
                 return false;
             }
         }
@@ -90,7 +90,7 @@ namespace MySteamLibrary.Services
                 // Check if source file exists
                 if (!File.Exists(sourceImagePath))
                 {
-                    System.Diagnostics.Debug.WriteLine($"❌ Source file not found: {sourceImagePath}");
+                    //System.Diagnostics.Debug.WriteLine($"❌ Source file not found: {sourceImagePath}");
                     return false;
                 }
 
@@ -99,11 +99,11 @@ namespace MySteamLibrary.Services
 
                 // Validate file size (max 10MB to be safe)
                 const long maxFileSize = 10 * 1024 * 1024; // 10MB
-                if (fileInfo.Length > maxFileSize)
-                {
-                    System.Diagnostics.Debug.WriteLine($"⚠️  Image file too large: {fileInfo.Length:N0} bytes (max: {maxFileSize:N0})");
-                    // Still proceed, but warn
-                }
+                //if (fileInfo.Length > maxFileSize)
+                //{
+                //    System.Diagnostics.Debug.WriteLine($"⚠️  Image file too large: {fileInfo.Length:N0} bytes (max: {maxFileSize:N0})");
+                //    // Still proceed, but warn
+                //}
 
                 // Validate it's actually an image by checking extension
                 var extension = fileInfo.Extension.ToLowerInvariant();
@@ -111,7 +111,7 @@ namespace MySteamLibrary.Services
 
                 if (Array.IndexOf(validExtensions, extension) == -1)
                 {
-                    System.Diagnostics.Debug.WriteLine($"⚠️  Invalid image extension: {extension}");
+                    //System.Diagnostics.Debug.WriteLine($"⚠️  Invalid image extension: {extension}");
                     return false;
                 }
 
@@ -119,12 +119,12 @@ namespace MySteamLibrary.Services
                 string cacheFolder = _cacheService.GetCacheFolder();
                 string destinationPath = Path.Combine(cacheFolder, $"{game.AppId}_cover.jpg");
 
-                System.Diagnostics.Debug.WriteLine($"💾 Saving custom image to: {destinationPath}");
+                //System.Diagnostics.Debug.WriteLine($"💾 Saving custom image to: {destinationPath}");
 
                 // If a file already exists, delete it first
                 if (File.Exists(destinationPath))
                 {
-                    System.Diagnostics.Debug.WriteLine($"🗑️  Removing existing image");
+                    //System.Diagnostics.Debug.WriteLine($"🗑️  Removing existing image");
                     File.Delete(destinationPath);
                 }
 
@@ -132,20 +132,20 @@ namespace MySteamLibrary.Services
                 // We'll always save as .jpg regardless of source format for consistency
                 File.Copy(sourceImagePath, destinationPath, overwrite: true);
 
-                System.Diagnostics.Debug.WriteLine($"✅ Custom image saved successfully");
-                System.Diagnostics.Debug.WriteLine($"   📊 File size: {new FileInfo(destinationPath).Length:N0} bytes");
+                //System.Diagnostics.Debug.WriteLine($"✅ Custom image saved successfully");
+                //System.Diagnostics.Debug.WriteLine($"   📊 File size: {new FileInfo(destinationPath).Length:N0} bytes");
 
                 // Update the game model's ImagePath
                 game.ImagePath = destinationPath;
 
-                System.Diagnostics.Debug.WriteLine($"✅ GameModel.ImagePath updated to: {destinationPath}");
+                //System.Diagnostics.Debug.WriteLine($"✅ GameModel.ImagePath updated to: {destinationPath}");
 
                 return true;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ Error saving custom image: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"   Stack trace: {ex.StackTrace}");
+                //System.Diagnostics.Debug.WriteLine($"❌ Error saving custom image: {ex.Message}");
+                //System.Diagnostics.Debug.WriteLine($"   Stack trace: {ex.StackTrace}");
                 return false;
             }
         }
@@ -162,20 +162,20 @@ namespace MySteamLibrary.Services
 
                 if (File.Exists(imagePath))
                 {
-                    System.Diagnostics.Debug.WriteLine($"🗑️  Removing custom image for {game.Title}");
+                    //System.Diagnostics.Debug.WriteLine($"🗑️  Removing custom image for {game.Title}");
                     File.Delete(imagePath);
                 }
 
                 // Reset the image path to empty so it will try to download again or show placeholder
                 game.ImagePath = string.Empty;
 
-                System.Diagnostics.Debug.WriteLine($"✅ Custom image removed. Set to placeholder.");
+                //System.Diagnostics.Debug.WriteLine($"✅ Custom image removed. Set to placeholder.");
 
                 return true;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ Error removing custom image: {ex.Message}");
+                //System.Diagnostics.Debug.WriteLine($"❌ Error removing custom image: {ex.Message}");
                 return false;
             }
         }

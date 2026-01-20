@@ -47,7 +47,7 @@ public class BitmapValueConverter : IValueConverter
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to load placeholder asset: {ex.Message}");
+            //System.Diagnostics.Debug.WriteLine($"Failed to load placeholder asset: {ex.Message}");
             return null;
         }
     }
