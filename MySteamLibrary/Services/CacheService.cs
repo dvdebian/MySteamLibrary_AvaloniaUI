@@ -46,12 +46,12 @@ namespace MySteamLibrary.Services
             _syncStateFile = Path.Combine(_cacheFolder, "sync_state.json");
 
             // LOG THE ACTUAL PATHS FOR DEBUGGING
-            System.Diagnostics.Debug.WriteLine("╔════════════════════════════════════════════════════════╗");
-            System.Diagnostics.Debug.WriteLine("║        CACHE SERVICE INITIALIZED                       ║");
-            System.Diagnostics.Debug.WriteLine("╚════════════════════════════════════════════════════════╝");
-            System.Diagnostics.Debug.WriteLine($"📁 Cache Folder: {_cacheFolder}");
-            System.Diagnostics.Debug.WriteLine($"📄 Metadata File: {_metadataFile}");
-            System.Diagnostics.Debug.WriteLine("");
+            //System.Diagnostics.Debug.WriteLine("╔════════════════════════════════════════════════════════╗");
+            //System.Diagnostics.Debug.WriteLine("║        CACHE SERVICE INITIALIZED                       ║");
+            //System.Diagnostics.Debug.WriteLine("╚════════════════════════════════════════════════════════╝");
+            //System.Diagnostics.Debug.WriteLine($"📁 Cache Folder: {_cacheFolder}");
+            //System.Diagnostics.Debug.WriteLine($"📄 Metadata File: {_metadataFile}");
+            //System.Diagnostics.Debug.WriteLine("");
 
             // Ensure the cache directory exists on startup
             EnsureCacheDirectoryExists();
@@ -65,9 +65,9 @@ namespace MySteamLibrary.Services
         {
             if (!Directory.Exists(_cacheFolder))
             {
-                System.Diagnostics.Debug.WriteLine($"✨ Creating cache directory: {_cacheFolder}");
+                //System.Diagnostics.Debug.WriteLine($"✨ Creating cache directory: {_cacheFolder}");
                 Directory.CreateDirectory(_cacheFolder);
-                System.Diagnostics.Debug.WriteLine($"✅ Cache directory created successfully");
+                //System.Diagnostics.Debug.WriteLine($"✅ Cache directory created successfully");
             }
             else
             {
@@ -77,15 +77,15 @@ namespace MySteamLibrary.Services
                 if (File.Exists(_metadataFile))
                 {
                     var fileInfo = new FileInfo(_metadataFile);
-                    System.Diagnostics.Debug.WriteLine($"📊 Existing cache file: {fileInfo.Length:N0} bytes");
-                    System.Diagnostics.Debug.WriteLine($"📅 Last modified: {fileInfo.LastWriteTime}");
+                    //System.Diagnostics.Debug.WriteLine($"📊 Existing cache file: {fileInfo.Length:N0} bytes");
+                    //System.Diagnostics.Debug.WriteLine($"📅 Last modified: {fileInfo.LastWriteTime}");
                 }
 
                 // Count existing images
                 try
                 {
                     var imageFiles = Directory.GetFiles(_cacheFolder, "*_cover.jpg");
-                    System.Diagnostics.Debug.WriteLine($"🖼️  Cached images: {imageFiles.Length}");
+                    //System.Diagnostics.Debug.WriteLine($"🖼️  Cached images: {imageFiles.Length}");
                 }
                 catch
                 {
@@ -119,10 +119,7 @@ namespace MySteamLibrary.Services
                 {
                     System.Diagnostics.Process.Start("explorer.exe", _cacheFolder);
                 }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"⚠️ Cache folder doesn't exist: {_cacheFolder}");
-                }
+              
             }
             catch (Exception ex)
             {
@@ -135,7 +132,7 @@ namespace MySteamLibrary.Services
         /// </summary>
         public async Task SaveLibraryCacheAsync(List<GameModel> games)
         {
-            System.Diagnostics.Debug.WriteLine($"💾 Saving {games.Count} games to cache...");
+            //System.Diagnostics.Debug.WriteLine($"💾 Saving {games.Count} games to cache...");
 
             // CRITICAL: Ensure the cache directory exists before saving
             // This handles the case where the folder was deleted after initialization
@@ -149,9 +146,9 @@ namespace MySteamLibrary.Services
                 await File.WriteAllTextAsync(_metadataFile, json);
 
                 var fileInfo = new FileInfo(_metadataFile);
-                System.Diagnostics.Debug.WriteLine($"✅ Cache saved successfully!");
-                System.Diagnostics.Debug.WriteLine($"   📊 {games.Count} games, {fileInfo.Length:N0} bytes");
-                System.Diagnostics.Debug.WriteLine($"   📁 {_metadataFile}");
+                //System.Diagnostics.Debug.WriteLine($"✅ Cache saved successfully!");
+                //System.Diagnostics.Debug.WriteLine($"   📊 {games.Count} games, {fileInfo.Length:N0} bytes");
+                //System.Diagnostics.Debug.WriteLine($"   📁 {_metadataFile}");
             }
             catch (Exception ex)
             {
@@ -170,11 +167,11 @@ namespace MySteamLibrary.Services
         /// </summary>
         public async Task<List<GameModel>> LoadLibraryCacheAsync()
         {
-            System.Diagnostics.Debug.WriteLine($"📂 Loading cache from: {_metadataFile}");
+            //System.Diagnostics.Debug.WriteLine($"📂 Loading cache from: {_metadataFile}");
 
             if (!File.Exists(_metadataFile))
             {
-                System.Diagnostics.Debug.WriteLine($"ℹ️  No cache file found (this is normal on first run)");
+                //System.Diagnostics.Debug.WriteLine($"ℹ️  No cache file found (this is normal on first run)");
                 return new List<GameModel>();
             }
 
@@ -185,7 +182,7 @@ namespace MySteamLibrary.Services
                 var json = await File.ReadAllTextAsync(_metadataFile);
                 var games = JsonSerializer.Deserialize<List<GameModel>>(json) ?? new List<GameModel>();
 
-                System.Diagnostics.Debug.WriteLine($"✅ Loaded {games.Count} games from cache");
+                //System.Diagnostics.Debug.WriteLine($"✅ Loaded {games.Count} games from cache");
                 return games;
             }
             catch (Exception ex)
@@ -240,13 +237,10 @@ namespace MySteamLibrary.Services
                     if (imageData.Length > 1000) // Minimum reasonable image size
                     {
                         await File.WriteAllBytesAsync(localPath, imageData);
-                        System.Diagnostics.Debug.WriteLine($"✅ Image saved: {imageData.Length:N0} bytes from {url}");
+                        //System.Diagnostics.Debug.WriteLine($"✅ Image saved: {imageData.Length:N0} bytes from {url}");
                         return localPath;
                     }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"⚠️  Downloaded data too small ({imageData.Length} bytes), trying next URL...");
-                    }
+                   
                 }
                 catch (HttpRequestException httpEx)
                 {
@@ -261,8 +255,8 @@ namespace MySteamLibrary.Services
             }
 
             // All download attempts failed
-            System.Diagnostics.Debug.WriteLine($"❌ All image download attempts failed for AppId {appId}");
-            System.Diagnostics.Debug.WriteLine($"   Game will display with placeholder image");
+            //System.Diagnostics.Debug.WriteLine($"❌ All image download attempts failed for AppId {appId}");
+            //System.Diagnostics.Debug.WriteLine($"   Game will display with placeholder image");
 
             // Return empty string so BitmapValueConverter immediately shows placeholder
             // This avoids repeated network requests and improves performance
@@ -312,7 +306,7 @@ namespace MySteamLibrary.Services
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 var json = JsonSerializer.Serialize(state, options);
                 await File.WriteAllTextAsync(_syncStateFile, json);
-                System.Diagnostics.Debug.WriteLine($"✅ Sync state saved: IsFullySynced={isFullySynced}");
+                //System.Diagnostics.Debug.WriteLine($"✅ Sync state saved: IsFullySynced={isFullySynced}");
             }
             catch (Exception ex)
             {
@@ -330,7 +324,7 @@ namespace MySteamLibrary.Services
             {
                 if (!File.Exists(_syncStateFile))
                 {
-                    System.Diagnostics.Debug.WriteLine($"ℹ️  No sync state file found (sync incomplete or first run)");
+                    //System.Diagnostics.Debug.WriteLine($"ℹ️  No sync state file found (sync incomplete or first run)");
                     return false;
                 }
 
@@ -340,7 +334,7 @@ namespace MySteamLibrary.Services
                 if (state != null && state.ContainsKey("IsFullySynced"))
                 {
                     bool isFullySynced = state["IsFullySynced"].GetBoolean();
-                    System.Diagnostics.Debug.WriteLine($"✅ Sync state loaded: IsFullySynced={isFullySynced}");
+                    //System.Diagnostics.Debug.WriteLine($"✅ Sync state loaded: IsFullySynced={isFullySynced}");
                     return isFullySynced;
                 }
             }

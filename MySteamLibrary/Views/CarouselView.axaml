@@ -216,7 +216,7 @@
                            TextAlignment="Center" 
                            HorizontalAlignment="Stretch"
                            TextWrapping="NoWrap"
-                           Margin="20,10,20,0"/>
+                           Margin="20,-10,20,0"/>
                 
                 <TextBlock x:Name="PlayTimeText"
                            Text="{Binding CurrentSelectedGame.PlayTime, StringFormat='{}{0} HOURS PLAYED', RelativeSource={RelativeSource AncestorType=views:CarouselView}}"
