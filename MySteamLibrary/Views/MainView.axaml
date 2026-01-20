@@ -324,14 +324,14 @@
                                     Width="24" Height="24" 
                                     Background="#101a24" 
                                     BorderBrush="#537a97" 
-                                    BorderThickness="1"                                   
+                                    BorderThickness="0"                                   
                                     CornerRadius="4" 
                                     Padding="0" 
                                     Command="{Binding ToggleSyncPanelCommand}" 
                                     ToolTip.Tip="Hide filters and sync progress" 
                                     Cursor="Hand">
                                 <Panel>
-                                    <TextBlock Text="▲" FontSize="11" Foreground="#537a97" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBlock Text="▲" FontSize="11" Foreground="#537a97" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Panel>
                             </Button>
                         </Grid>
@@ -450,16 +450,16 @@
                 <Grid Margin="0,5,0,0" IsVisible="{Binding !IsSyncPanelExpanded}">
                     <Button HorizontalAlignment="Right"
                             Width="24" Height="24" 
-                            Background="#1a2a3a" 
+                            Background="#171d25" 
                             BorderBrush="#537a97" 
-                            BorderThickness="1" 
+                            BorderThickness="0" 
                             CornerRadius="4" 
                             Padding="0" 
                             Command="{Binding ToggleSyncPanelCommand}" 
                             ToolTip.Tip="Show filters and sync progress" 
                             Cursor="Hand">
                         <Panel>
-                            <TextBlock Text="▼" FontSize="11" Foreground="#537a97" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="▼" FontSize="11" Foreground="#537a97" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Panel>
                     </Button>
                 </Grid>

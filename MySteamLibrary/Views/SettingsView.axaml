@@ -3,7 +3,22 @@
              xmlns:vm="using:MySteamLibrary.ViewModels"
              x:Class="MySteamLibrary.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
+
+ <UserControl.Styles>
+            <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
     
+                         
+                                <Setter Property="BorderBrush" Value="#537a97"/>
+                                <Setter Property="Background" Value="#364352"/>
+                            </Style>
+                           
+                            <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+                                <Setter Property="BorderBrush" Value="#1a7ac1"/>
+                                <Setter Property="Background" Value="#242931"/>
+                            </Style>
+
+                        
+  </UserControl.Styles>
     <Panel Background="#CC000000"> 
         
         <Border Background="#1e2329" 
@@ -27,7 +42,7 @@
                                FontWeight="SemiBold"/>
                     <TextBox Text="{Binding SteamApiKey}" 
                              Watermark="Enter your Steam API Key"
-                             Background="#101a24"
+                             Background="#364352"
                              Foreground="White"
                              BorderBrush="#2a475e"
                              BorderThickness="1"
@@ -47,12 +62,15 @@
                                FontWeight="SemiBold"/>
                     <TextBox Text="{Binding SteamId}" 
                              Watermark="Enter your Steam ID (64-bit)"
-                             Background="#101a24"
+                             Background="#364352"
                              Foreground="White"
                              BorderBrush="#2a475e"
                              BorderThickness="1"
                              CornerRadius="4"
-                             Padding="8"/>
+                             Padding="8">
+                        
+                        </TextBox>
+
                     <TextBlock Text="Find your Steam ID at: https://steamid.io" 
                                FontSize="10" 
                                Foreground="#67c1f5"
@@ -77,7 +95,8 @@
                                    FontFamily="Consolas"
                                    TextWrapping="Wrap"/>
                     </Border>
-                    <Button Content="📁 OPEN CACHE FOLDER" 
+                    <Button 
+                            Content="📁 OPEN CACHE FOLDER" 
                             Command="{Binding OpenCacheFolderCommand}"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Center"
@@ -104,6 +123,7 @@
                       ColumnSpacing="10">
                     
                     <Button Grid.Column="0"
+                            
                             Content="CLEAR DATA" 
                             Command="{Binding ClearDataCommand}"
                             HorizontalAlignment="Stretch"
@@ -124,6 +144,7 @@
                     </Button>
 
                     <Button Grid.Column="1"
+                            
                             Content="SAVE &amp; CLOSE" 
                             Command="{Binding CloseCommand}"
                             HorizontalAlignment="Stretch"
@@ -131,7 +152,7 @@
                             Background="#2a475e"
                             Foreground="White"
                             BorderBrush="#67c1f5"
-                            BorderThickness="1"
+                            BorderThickness="0"
                             CornerRadius="4"
                             Padding="0,10"
                             FontSize="12"
@@ -145,6 +166,7 @@
                     </Button>
 
                      <Button Grid.Column="2"
+                            
                             Content="CANCEL" 
                             Command="{Binding CancelCommand}"
                             HorizontalAlignment="Stretch"
@@ -152,7 +174,7 @@
                             Background="#2a475e"
                             Foreground="White"
                             BorderBrush="#67c1f5"
-                            BorderThickness="1"
+                            BorderThickness="0"
                             CornerRadius="4"
                             Padding="0,10"
                             FontSize="12"
