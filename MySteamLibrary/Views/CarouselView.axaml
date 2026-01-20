@@ -300,7 +300,7 @@
                         <Button Content="CLOSE"
                           
                                 Click="OnEffectToggleClicked"
-                                  HorizontalAlignment="Stretch"
+                                  HorizontalAlignment="Center"
                             HorizontalContentAlignment="Center"
                             Background="#2a475e"
                             Foreground="White"
