@@ -275,12 +275,12 @@ public partial class MainViewModel : ViewModelBase
 
                 if (!isFullySynced && _masterLibrary.Count > 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("🔄 Previous sync incomplete - auto-resuming...");                  
+                    //System.Diagnostics.Debug.WriteLine("🔄 Previous sync incomplete - auto-resuming...");                  
                     // Show sync panel (user can expand manually with toggle button)
                     IsSyncPanelVisible = true;
                     await _cacheService.SaveSyncStateAsync(false); // Mark sync as incomplete
 
-                    System.Diagnostics.Debug.WriteLine($"📊 Resume progress: Images {ImagesCurrent}/{ImagesTotal}, Descriptions {DescriptionsCurrent}/{DescriptionsTotal} , Master {_masterLibrary.Count}");
+                    //System.Diagnostics.Debug.WriteLine($"📊 Resume progress: Images {ImagesCurrent}/{ImagesTotal}, Descriptions {DescriptionsCurrent}/{DescriptionsTotal} , Master {_masterLibrary.Count}");
 
                     // Resume background sync
                     _ = Task.Run(() => BackgroundUpdateDataAsync());
@@ -290,7 +290,7 @@ public partial class MainViewModel : ViewModelBase
 
                     DescriptionsCurrent = _masterLibrary.Count;
                     ImagesCurrent = _masterLibrary.Count;
-                    System.Diagnostics.Debug.WriteLine($"✅ Sync complete: Images {ImagesCurrent}/{ImagesTotal}, Descriptions {DescriptionsCurrent}/{DescriptionsTotal}, Master {_masterLibrary.Count}");
+                    //System.Diagnostics.Debug.WriteLine($"✅ Sync complete: Images {ImagesCurrent}/{ImagesTotal}, Descriptions {DescriptionsCurrent}/{DescriptionsTotal}, Master {_masterLibrary.Count}");
                     // Keep IsSyncPanelVisible = false (no active sync)
                 }
             }
@@ -474,7 +474,7 @@ public partial class MainViewModel : ViewModelBase
 
             // Mark sync as fully complete
             await _cacheService.SaveSyncStateAsync(true);
-            System.Diagnostics.Debug.WriteLine("✅ Full sync completed!");
+            //System.Diagnostics.Debug.WriteLine("✅ Full sync completed!");
 
             // Note: IsSyncPanelVisible stays true so users can see final sync stats
         }
@@ -612,6 +612,6 @@ public partial class MainViewModel : ViewModelBase
         GameListCurrent = 0;
         SelectedGame = null;
         OnPropertyChanged(nameof(HasNoData));
-        System.Diagnostics.Debug.WriteLine("All game data cleared from memory");
+        //System.Diagnostics.Debug.WriteLine("All game data cleared from memory");
     }
 }

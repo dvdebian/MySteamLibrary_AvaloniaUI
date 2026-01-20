@@ -69,9 +69,9 @@ namespace MySteamLibrary.Services
                 Directory.CreateDirectory(_cacheFolder);
                 //System.Diagnostics.Debug.WriteLine($"✅ Cache directory created successfully");
             }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine($"✅ Cache directory exists");
+            //else
+            //{
+            //    System.Diagnostics.Debug.WriteLine($"✅ Cache directory exists");
 
                 // Show existing cache stats
                 if (File.Exists(_metadataFile))
@@ -91,8 +91,8 @@ namespace MySteamLibrary.Services
                 {
                     // Ignore errors when counting files
                 }
-            }
-            System.Diagnostics.Debug.WriteLine("");
+            
+            //System.Diagnostics.Debug.WriteLine("");
         }
 
         /// <summary>
@@ -228,7 +228,7 @@ namespace MySteamLibrary.Services
             {
                 try
                 {
-                    System.Diagnostics.Debug.WriteLine($"⬇️  Trying to download image: AppId {appId} from {url}");
+                    //System.Diagnostics.Debug.WriteLine($"⬇️  Trying to download image: AppId {appId} from {url}");
 
                     // Download the image data from Steam's CDN
                     var imageData = await _httpClient.GetByteArrayAsync(url);

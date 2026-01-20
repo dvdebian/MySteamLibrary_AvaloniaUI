@@ -170,7 +170,7 @@ namespace MySteamLibrary.Services
             // Validate that credentials are provided
             if (string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(steamId))
             {
-                System.Diagnostics.Debug.WriteLine("Steam API Key or Steam ID is missing. Please configure in Settings.");
+                //System.Diagnostics.Debug.WriteLine("Steam API Key or Steam ID is missing. Please configure in Settings.");
                 return new List<GameModel>();
             }
 
@@ -201,7 +201,7 @@ namespace MySteamLibrary.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Steam API Error: {ex.Message}");
+                //System.Diagnostics.Debug.WriteLine($"Steam API Error: {ex.Message}");
                 return new List<GameModel>();
             }
         }

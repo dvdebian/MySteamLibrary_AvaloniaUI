@@ -208,7 +208,7 @@ public partial class SettingsViewModel : ViewModelBase
             // Clear all game data from MainViewModel
             _mainViewModel?.ClearAllData();
 
-            System.Diagnostics.Debug.WriteLine("✅ All data cleared successfully.");
+            //System.Diagnostics.Debug.WriteLine("✅ All data cleared successfully.");
             UpdateCacheInfo();
         }
         catch (Exception ex)
