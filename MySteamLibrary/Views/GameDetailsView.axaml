@@ -32,6 +32,16 @@
             <Setter Property="Foreground" Value="#858d97"/>
             <Setter Property="LetterSpacing" Value="1.5"/>
         </Style>
+        
+       <!-- removes the hover effect for the background-->
+        <Style Selector="Panel > Button">
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="Transparent" />
+            </Style>
+            <Style Selector="^:pressed /template/ ContentPresenter">
+                <Setter Property="Background" Value="Transparent" />
+            </Style>
+        </Style>
     </UserControl.Styles>
 
     <Panel Background="#CC000000">
