@@ -26,8 +26,7 @@ To use this application, you will need a **Steam Web API Key**. This allows the 
 
 ### 2. Find your SteamID64
 1.  Go to your Steam Profile.
-2.  Right-click anywhere and select **Copy Page URL**.
-3.  Use a site like [SteamID.io](https://steamid.io/) to get your **SteamID64** (it's the long number).
+2.  Your SteamID64 is that long number at the end of the url
 
 ### 3. Run the App
 1.  Download the latest [Release](https://github.com/dvdebian/MySteamLibrary_AvaloniaUI/releases).
