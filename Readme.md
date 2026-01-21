@@ -10,8 +10,6 @@ A cross-platform Steam Library clone built with **Avalonia UI** and **C#** using
 
 - 
 ## 🛠️ Requirements
-
-### Prerequisites
 * **.NET 8.0 Desktop Runtime**. If it is not installed, please [download and install it here](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.12-windows-x64-installer).
 
 ---
