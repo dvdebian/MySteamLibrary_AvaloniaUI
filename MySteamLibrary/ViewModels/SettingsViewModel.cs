@@ -13,8 +13,17 @@ namespace MySteamLibrary.ViewModels;
 /// </summary>
 public partial class SettingsViewModel : ViewModelBase
 {
-    private readonly string _settingsFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.json");
-    private readonly string _cacheFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cache");
+
+    // Define the path to Local AppData (typically C:\Users\<User>\AppData\Local)
+    private static readonly string AppDataPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "MySteamLibrary");
+
+    // Updated file and folder paths
+    private readonly string _settingsFile = Path.Combine(AppDataPath, "settings.json");
+    private readonly string _cacheFolder = Path.Combine(AppDataPath, "Cache");
+    //private readonly string _settingsFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.json");
+    //private readonly string _cacheFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cache");
 
     // Reference to CacheService for cache management operations
     private Services.CacheService? _cacheService;
